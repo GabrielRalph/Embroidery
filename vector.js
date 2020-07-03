@@ -50,6 +50,9 @@ class Vector{
     return new Vector(this.x*val, this.y*val)
   }
 	grad(v2){
+		if (v2.x - this.x == 0){
+			return 10000000000
+		}
 		return (v2.y - this.y)/(v2.x - this.x)
 	}
   setByAngle(Φ, r){
@@ -78,11 +81,15 @@ class Vector{
     return translation.rotate(psi)
   }
 
+	distToLine(p1, p2){
+		let line = p2.sub(p1).rotate(Math.PI/2)
+	  let d = line.dot(this.sub(p1))/line.norm()
+	  return Math.abs(d)
+	}
+
+	// (x + iy)*(cos(t) + isin(t)) = xcos(t) - ysin(t) + i(xsin(t) + ycos(t))
   rotate(theta){
-    let r = this.norm()
-    let t = this.arg()
-    this.x = r*Math.cos(t + theta)
-    this.y = r*Math.sin(t + theta)
+    return new Vector(this.x*Math.cos(theta) - this.y*Math.sin(theta), this.x*Math.sin(theta) + this.y*Math.cos(theta))
   }
 
   angleBetween(p2){

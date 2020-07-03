@@ -1,41 +1,112 @@
-class EmbroideryCam{
-  constructor(svg){
-    this.segs = []
-    this.render_svg = svg
 
-    this.stitch_length = 4
-    this.angle_threshold = 165
-    this.resolution = 0.15
-    this.lastColor = null
-    this.operations = []
+function DSTHeader(data){
 
+  let buffer = []
+
+  let pushString = (string) => {
+    for (var i = 0; i < string.length; i++){
+      buffer.push(string[i])
+    }
+  }
+  let push = (value) => {
+    if(typeof value == 'string'){
+      pushString(value)
+    }else{
+      buffer.push(value)
+    }
+  }
+  let pad = (value, n) => {
+    for(var i = 0; i < n; i++){
+      buffer.push(value)
+    }
+  }
+  let add = (info) => {
+    info.label = `${info.label}`
+    info.value = `${info.value}`
+    push(info.label)
+    if (info.trail != undefined){
+      push(info.value)
+      pad(info.trail, info.size - info.value.length)
+    }else if(info.lead != undefined){
+      pad(info.lead, info.size - info.value.length)
+      push(info.value)
+    }
+    push(0x0D)
   }
 
 
-// | 1 | -1 |  3 | -3 |  9 | -9 | 27 | -27 | 81 | -81 |
-//-----------------------------------------------------
-// | a |  b |  c |  d |  e | f  | g  |  h  |  i |  j  |
+  //['LA:', 'ST:', 'CO:', '+X:','-X:', '+Y:', '+Y:', 'AX:', 'AY:', 'MX:', 'MY:', 'PD:']
 
-//x = a - b + 3c - 3d + 9e - 9f + 27g - 27h + 81i - 81j
+  add({label: 'LA:', trail: 0x20, value: data.label, size: 16})
 
-  decToDst(x, y = 'stitch', mode = 'stitch'){
-    if (x instanceof Vector){
-      let v = x.assign();
-      mode = y
-      x = v.x;
-      y = v.y;
-    }
+  add({label: 'ST:', lead: 0, value: data.stitch_count, size: 7})
 
+  add({label: 'CO:', lead: 0, value: data.color_changes, size: 3})
+
+  add({label: '+X:', lead: 0, value: data.maxx, size: 5})
+  add({label: '-X:', lead: 0, value: data.minx, size: 5})
+  add({label: '+Y:', lead: 0, value: data.maxy, size: 5})
+  add({label: '-Y:', lead: 0, value: data.miny, size: 5})
+  add({label: '+X:', lead: 0, value: data.maxx, size: 5})
+  add({label: '-X:', lead: 0, value: data.minx, size: 5})
+  add({label: '+Y:', lead: 0, value: data.maxy, size: 5})
+  add({label: '-Y:', lead: 0, value: data.miny, size: 5})
+
+  push('AX:+')
+  pad(0, 4)
+  push('0')
+  push(0x0D)
+
+  push('AY:+')
+  pad(0, 4)
+  push('0')
+  push(0x0D)
+
+  push('MX:+')
+  pad(0, 4)
+  push('0')
+  push(0x0D)
+
+  push('MY:+')
+  pad(0, 4)
+  push('0')
+  push(0x0D)
+
+  push('PD:******')
+  pad(0x0D, 3)
+
+  pad(0x20, 512 - buffer.length)
+  return buffer
+}
+
+class DSTBuffer{
+  constructor(){
+    this.buffer = []
+    this.maxx = -10000000000;
+    this.maxy = -10000000000;
+    this.minx = 100000000000;
+    this.miny = 100000000000;
+    this.label = "MyCam";
+    this.stitch_count = 0;
+    this.color_changes = 0;
+  }
+  decToDst(p, mode = 'stitch'){
+    let x = 0;
+    let y = 0;
     let b1 = 0;
     let b2 = 0;
     let b3 = (1<<0)|(1<<1);
 
-    if(mode == 'jump'){
-      b3 |= (1<<7)
-      console.log('j');
-    }else if(mode == 'color'){
+    if (p instanceof Vector){
+      x = p.x;
+      y = p.y;
+    }else if (p == 'color'){
       b3 |= (1<<7)|(1<<6)
       return [b1, b2, b3]
+    }
+
+    if(mode == 'jump'){
+      b3 |= (1<<7)
     }
 
     let y_sign = y/Math.abs(y);
@@ -208,6 +279,9 @@ class EmbroideryCam{
     return [b1, b2, b3]
   }
   dstToDec(b1, b2, b3){
+    let b = (b, c) => {
+      return ((b>>c)&1)
+    }
     let x = b(b1, 0) - b(b1, 1) + 9*b(b1, 2) - 9*b(b1, 3) + 3*b(b2, 0) -3*b(b2, 1)
     x +=   27*b(b2, 2) - 27*b(b2, 3) + 81*b(b3, 2) - 81*b(b3, 3);
     let y = b(b1, 7) - b(b1, 6) + 9*b(b1, 5) - 9*b(b1, 4) + 3*b(b2, 7) -3*b(b2, 6)
@@ -215,15 +289,70 @@ class EmbroideryCam{
     return {x: x, y: y}
   }
 
-  export(){
-    let data = this.decodeDST()
-    let header = new Header(data)
-    let dst = header.buffer.concat(data.binBuffer)
-    dst.push(0)
-    dst.push(0)
-    dst.push(243)
-    let n = dst.length
 
+  addPoint(p, mode){
+    let b = this.decToDst(p, mode)
+    this.buffer.push(b[0])
+    this.buffer.push(b[1])
+    this.buffer.push(b[2])
+  }
+
+  addEnd(){
+    this.buffer.push(0)
+    this.buffer.push(0)
+    this.buffer.push(243)
+  }
+
+  encodeStitchCam(stitchCam){
+    let lastPoint = new Vector()
+
+    let start = 1;
+
+    let lastColor = null;
+
+
+    stitchCam.forEachCommand((op) => {
+      let points = op.stitches
+      if(op.color != null&&lastColor != null&&lastColor != op.color){
+        this.addPoint('color')
+        this.color_changes ++
+      }else if(op.color != null){
+        lastColor = op.color
+      }
+      for (var i = start; i < points.length; i++){
+        this.stitch_count++
+        let p = points[i]
+        let dPoint = p.sub(lastPoint)
+        this.addPoint(dPoint, op.type)
+
+        this.minx = p.x<this.minx?p.x:this.minx
+        this.miny = p.y<this.miny?p.y:this.miny
+        this.maxx = p.x>this.maxx?p.x:this.maxx
+        this.maxy = p.y>this.maxy?p.y:this.maxy
+
+        lastPoint = p
+      }
+      start = 0;
+    })
+    this.addEnd()
+  }
+
+}
+
+class DSTExporter{
+  constructor(element){
+    this.download_element = element;
+    this.download_element.style.setProperty('visibility', 'hidden')
+    this.dstBuffer = new DSTBuffer()
+  }
+
+  exportStitchCam(stitchCam){
+    this.dstBuffer.encodeStitchCam(stitchCam)
+
+    let header = DSTHeader(this.dstBuffer)
+    let dst = header.concat(this.dstBuffer.buffer)
+
+    let n = dst.length;
     let array = new Uint8Array(n)
     for (var i = 0; i < n; i++){
       if(typeof dst[i] == 'string'){
@@ -232,177 +361,15 @@ class EmbroideryCam{
         array[i] = dst[i]
       }
     }
-    let dst_blob = new Blob([array], {type: "application/octet-stream"})
-    // let file = new File([dst_blob], 'mycam.DST')
 
+    let dst_blob = new Blob([array], {type: "application/octet-stream"})
     var url = window.URL.createObjectURL(dst_blob);
 
-    document.getElementById('download_link').href = url;
-
-  }
-
-  decodeDST(){
-    let lastPoint = new Vector()
-    let start = 1;
-    let buffer = [];
-    let stitch_count = 0;
-    let color_changes = 0;
-    let maxx = -10000000000;
-    let maxy = -10000000000;
-    let minx = 100000000000;
-    let miny = 100000000000;
-    this.operations.forEach((op) => {
-      if(op.points){
-        let points = op.points
-        for (var i = start; i < points.length; i++){
-          stitch_count++
-          let p = points[i]
-          let dPoint = p.sub(lastPoint)
-          let dstPoint = this.decToDst(dPoint, op.type)
-          buffer.push(dstPoint[0])
-          buffer.push(dstPoint[1])
-          buffer.push(dstPoint[2])
-          minx = p.x<minx?p.x:minx
-          miny = p.y<miny?p.y:miny
-          maxx = p.x>maxx?p.x:maxx
-          maxy = p.y>maxy?p.y:maxy
-          lastPoint = p
-        }
-        start = 0
-      }else{
-        stitch_count++
-        color_changes++
-        buffer.push(0)
-        buffer.push(0)
-        buffer.push(195)
-      }
-    })
-    return {
-      binBuffer: buffer,
-      label: 'MYCAM',
-      stitchCount: stitch_count,
-      colorChanges: color_changes,
-      maxx: Math.round(maxx),
-      maxy: Math.round(maxy),
-      minx: Math.round(minx),
-      miny: Math.round(miny)
-    }
-  }
-  camPaths(svg){
-    this.operations = []
-
-    let paths = svg.getElementsByTagName('path')
-    let n = paths.length
-    let last_point = new Vector()
-
-    for (var i = 0; i < n; i++){
-      let stitch_points = this.runningStitch(paths[i])
-      console.log(stitch_points[0]);
-      if(last_point instanceof Vector && stitch_points[0] instanceof Vector){
-        let jump_points = this.moveTo(last_point, stitch_points[0])
-        this.operations.push({
-          type: 'jump',
-          points: jump_points
-        })
-        this.operations.push({
-          type: 'stitch',
-          points: stitch_points
-        })
-        last_point = stitch_points[stitch_points.length -1]
-      }
-    }
-    return this.operations
-  }
-
-  runningStitch(path){
-    let sl = this.stitch_length/this.resolution
-    let stitchRender = new StitchRender(this.render_svg)
-    console.log({it:path.attributes.class});
-    let color = path.getAttribute('stroke')
-    if(this.lastColor != null && color != this.lastColor){
-      this.operations.push({type: 'color'})
-    }
-    if(color != null){
-      stitchRender.setStyle({
-        stroke: color
-      })
-    }
-    this.lastColor = color;
-    let length = path.getTotalLength()
-
-    let vbuff = []
-    let stitch_points = []
-
-    for (var i = 0; i < length; i += sl){
-      let v = new Vector(path.getPointAtLength(i))
-      vbuff.push(v)
-      if(vbuff.length > 2){
-        let a = vbuff[1].sub(vbuff[0])
-        let b = vbuff[1].sub(vbuff[2])
-        let angle = a.angleBetween(b)*180/Math.PI
-        if(angle > this.angle_threshold){
-          vbuff.shift()
-        }else{
-
-          i -= sl/2.5;
-          v = new Vector(path.getPointAtLength(i))
-          vbuff.pop()
-          vbuff.push(v)
-          vbuff.shift()
-        }
-      }
-
-      let stitch_point = v.round()
-
-      stitchRender.addStitch(stitch_point)
-      stitch_points.push(stitch_point)
-    }
-    let v = new Vector(path.getPointAtLength(length))
-    let stitch_point = v.round()
-
-    stitchRender.addStitch(stitch_point)
-    stitch_points.push(stitch_point)
-
-    return stitch_points
-  }
-
-  moveTo(point1, point2){
-    let m = Math.abs(point1.grad(point2))
-    let inc = new Vector()
-    if (m < 1){
-      inc.x = 120*(point2.x - point1.x)/Math.abs(point2.x - point1.x);
-      inc.y = 120*m*(point2.y - point1.y)/Math.abs(point2.y - point1.y);
-    }else{
-      inc.x = 120*(point2.x - point1.x)/Math.abs(point2.x - point1.x)/m;
-      inc.y = 120*(point2.y - point1.y)/Math.abs(point2.y - point1.y);
-    }
-    let inc_dist = inc.norm()
-    let move_dist = point1.distance(point2)
-    let n = Math.floor(move_dist/inc_dist)
-    let float_points = [point1]
-    for (var i = 0; i < n; i++){
-      float_points.push(float_points[i].add(inc))
-    }
-    float_points.push(point2)
-
-    let stitch_points = []
-    let stitchRender = new StitchRender(this.render_svg)
-    stitchRender.setStyle({
-      stroke: 'rgba(0,255,0,0.2)',
-      'stroke-width': '2',
-    }, 'line_style')
-    stitchRender.setStyle({
-      stroke: 'rgb(0,100,0)',
-      'stroke-width': '3',
-    }, 'dot_style')
-    float_points.forEach((stitch) => {
-      let stitch_point = stitch.round()
-      stitch_points.push(stitch_point)
-      stitchRender.addStitch(stitch_point)
-    });
-    return stitch_points
+    this.download_element.href = url;
+    this.download_element.style.setProperty('visibility', 'visible')
   }
 }
+
 
 class StitchRender{
   constructor(svg){
@@ -413,19 +380,23 @@ class StitchRender{
     this.render_svg.appendChild(this.render_line)
     this.render_svg.appendChild(this.render_dots)
     this.dot_style = {
-      stroke: 'rgb(150,0,0)',
-      'stroke-width': '4',
+      stroke: 'rgba(0,0,0,0.2)',
+      'stroke-width': '5',
       fill: 'none',
       'stroke-linecap': 'round',
     }
     this.line_style = {
-      stroke: 'red',
+      stroke: 'rgba(0,0,0,0.3)',
       'stroke-width': '4',
       fill: 'none',
       'stroke-linecap': 'round',
     }
     this.render_line.setProps(this.line_style)
     this.render_dots.setProps(this.dot_style)
+  }
+
+  reset(){
+    return new StitchRender(this.render_svg)
   }
 
   setStyle(style, key = null){
@@ -445,137 +416,306 @@ class StitchRender{
   }
 }
 
-class PathPoint{
-  constructor(string){
-    this.type = string[0];
-    string = string.substring(1)
-    this.values = string.replace(/(?!(^-))-/g, ',-').split(',');
-
-    this.p = null
-    this.c1 = null
-    this.c2 = null
-
-    this.dp = null
-    this.dc1 = null
-    this.dc2 = null
-
-    this.r = null
-    this.x_axis_rotation = 0
-    this.large_arc_flag = 0
-    this.sweep_flag = 0
-  }
-
-  set(relPathPoint){
-    if(this.type.toUpperCase() == this.type){
-      if (this.type == 'V'){
-        this.p = relPathPoint.p.assign()
-        this.p.y = this.values[0];
-      }else if(this.type == 'H'){
-        this.p = relPathPoint.p.assign()
-        this.p.x = this.values[0];
-      }else{
-        this.p = new Vector(this.values, this.values.length - 2)
-      }
-
-      if (this.type == 'C'){
-        this.c2 = new Vector(this.values, this.values.length - 4)
-        this.c1 = new Vector(this.values)
-      }else if(this.type == 'S'){
-        this.c2 = new Vector(this.values)
-        this.c1 = relPathPoint.c2.mul(-1)
-      }else if(this.type == 'Q'){
-        this.c1 = new Vector(this.values)
-        this.c2 = this.c1.assign()
-      }
-    }
-
-
-  }
-}
-class Header{
-  constructor(data = null){
-    this.buffer = []
-    if(data != null){
-      this.create(data)
-    }
-  }
-
-  pushString(string){
-    for (var i = 0; i < string.length; i++){
-      this.buffer.push(string[i])
-    }
-  }
-  pad(value, n){
-    for(var i = 0; i < n; i++){
-      this.buffer.push(value)
-    }
-  }
-  push(value){
-    if(typeof value == 'string'){
-      this.pushString(value)
-    }else{
-      this.buffer.push(value)
-    }
-  }
-
-  add(info){
-    info.label = `${info.label}`
-    info.value = `${info.value}`
-    this.push(info.label)
-    if (info.trail != undefined){
-      this.push(info.value)
-      this.pad(info.trail, info.size - info.value.length)
-    }else if(info.lead != undefined){
-      this.pad(info.lead, info.size - info.value.length)
-      this.push(info.value)
-    }
-    this.push(0x0D)
-  }
-
-  create(data){
-    //['LA:', 'ST:', 'CO:', '+X:','-X:', '+Y:', '+Y:', 'AX:', 'AY:', 'MX:', 'MY:', 'PD:']
-
-    this.add({label: 'LA:', trail: 0x20, value: data.label, size: 16})
-
-    this.add({label: 'ST:', lead: 0, value: data.stitchCount, size: 7})
-
-    this.add({label: 'CO:', lead: 0, value: data.colorChanges, size: 3})
-
-    this.add({label: '+X:', lead: 0, value: data.maxx, size: 5})
-    this.add({label: '-X:', lead: 0, value: data.minx, size: 5})
-    this.add({label: '+Y:', lead: 0, value: data.maxy, size: 5})
-    this.add({label: '-Y:', lead: 0, value: data.miny, size: 5})
-    this.add({label: '+X:', lead: 0, value: data.maxx, size: 5})
-    this.add({label: '-X:', lead: 0, value: data.minx, size: 5})
-    this.add({label: '+Y:', lead: 0, value: data.maxy, size: 5})
-    this.add({label: '-Y:', lead: 0, value: data.miny, size: 5})
-
-    this.push('AX:+')
-    this.pad(0, 4)
-    this.push('0')
-    this.push(0x0D)
-
-    this.push('AY:+')
-    this.pad(0, 4)
-    this.push('0')
-    this.push(0x0D)
-
-    this.push('MX:+')
-    this.pad(0, 4)
-    this.push('0')
-    this.push(0x0D)
-
-    this.push('MY:+')
-    this.pad(0, 4)
-    this.push('0')
-    this.push(0x0D)
-
-    this.push('PD:******')
-    this.pad(0x0D, 3)
-
-    this.pad(0x20, 512 - this.buffer.length)
-  }
-}
 let b = (b, c) => {
   return ((b>>c)&1)
+}
+class Jump{
+  constructor(svg){
+    this.type = 'jump'
+    this.svg = svg
+
+    this.stitchRender = new StitchRender(this.svg)
+
+    this.stitchRender.setStyle({
+      stroke: 'rgba(0,255,0,0.2)',
+      'stroke-width': '2',
+    }, 'line_style')
+    this.stitchRender.setStyle({
+      stroke: 'rgb(0,100,0)',
+      'stroke-width': '3',
+    }, 'dot_style')
+    this.stitches = []
+  }
+
+  addPoint(p){
+    this.stitches.push(p.round())
+    this.stitchRender.addStitch(p.round())
+  }
+
+  jumpAcross(point1, point2){
+
+    let m = Math.abs(point1.grad(point2))
+    let inc = new Vector()
+    if (m < 1){
+      inc.x = 118*(point2.x - point1.x)/Math.abs(point2.x - point1.x);
+      inc.y = 118*m*(point2.y - point1.y)/Math.abs(point2.y - point1.y);
+    }else{
+      inc.x = 118*(point2.x - point1.x)/Math.abs(point2.x - point1.x)/m;
+      inc.y = 118*(point2.y - point1.y)/Math.abs(point2.y - point1.y);
+    }
+
+    let inc_dist = inc.norm()
+    let move_dist = point1.distance(point2)
+    let n = Math.floor(move_dist/inc_dist)
+
+    let float_points = [point1]
+    this.addPoint(point1)
+
+    for (var i = 0; i < n; i++){
+      float_points.push(float_points[i].add(inc))
+      this.addPoint(float_points[i].add(inc))
+    }
+    this.addPoint(point2)
+  }
+
+  join(obj1, obj2){
+    let p1 = new Vector(0,0)
+    let p2 = new Vector(0,0)
+    if (obj1 instanceof Vector){
+      p1 = obj1
+    }else if(obj1 instanceof RunningStitch){
+      p1 = obj1.stitches[obj1.stitches.length - 1]
+    }
+    if (obj2 instanceof Vector){
+      p2 = obj2
+    }else if(obj2 instanceof RunningStitch){
+      p2 = obj2.stitches[0]
+    }
+    this.jumpAcross(p1, p2)
+  }
+}
+class RunningStitch{
+  constructor(svg){
+     this.type = 'stitch'
+
+      this.stitchLength = 2
+      this.threshold = 0.3
+      this.res = 0.6
+      this.unit = 0.1
+
+      this.svg = svg
+      this.path = null
+
+      this.l = 0
+      this.end = 0
+
+      this.stitches = []
+
+      this.computed = false
+
+      this.color = '#FFAACC'
+      this.label = ''
+
+      this.statusDisplay = null
+  }
+
+  appendStatusDisplay(element){
+    this.statusDisplay = document.createElement('tr')
+    this.updateStatus()
+    element.appendChild(this.statusDisplay)
+  }
+
+  updateStatus(){
+    this.statusDisplay.innerHTML = `<td>${this.label}</td><td>${this.stitches.length}</td><td>${Math.round(10000*this.l/this.end)/100}</td>`
+  }
+
+  setPath(path){
+    this.stitchRender = new StitchRender(this.svg)
+    this.l = 0
+    this.path = path
+    this.stitches = []
+    this.computed = false
+
+    this.statusTable = null;
+
+    if (path.stitchProps){
+      this.threshold = path.stitchProps.threshold
+      this.res = path.stitchProps.res
+      this.stitchLength = path.stitchProps.stitchLength
+      let color = path.stitchProps.color
+      if (color){
+        this.stitchRender.setStyle({
+          stroke: color
+        }, 'line_style')
+
+        this.color = color
+      }
+      this.label = path.stitchProps.label
+    }
+
+
+    this.end = this.path.getTotalLength()
+
+  }
+
+  addStitch(point, render = true){
+    this.stitches.push(point.round())
+    if (render) {
+      this.stitchRender.addStitch(point.round())
+    }
+  }
+
+  nextStitch(){
+    if (this.statusDisplay != null){
+      this.updateStatus()
+    }
+    if ((this.path == null)||(this.computed)){
+      return false
+    }
+
+    if(this.stitches.length < 1){
+      let first_stitch = new Vector(this.path.getPointAtLength(0))
+      this.addStitch(first_stitch)
+      return true
+    }
+
+    let dl = this.stitchLength/this.unit;
+    let di = this.res/this.unit;
+    let thresh = this.threshold/this.unit;
+
+    let p1 = new Vector(this.path.getPointAtLength(this.l));
+    let p2 = new Vector(this.path.getPointAtLength(this.l + dl));
+
+    for (var i = di; i < dl; i += di){
+      let p = new Vector(this.path.getPointAtLength(this.l + i))
+      let d = p.distToLine(p1, p2)
+      if (d > thresh){
+        this.l += i
+        if (this.l > this.end){
+          let endpoint = new Vector(this.path.getPointAtLength(this.end))
+          this.addStitch(endpoint)
+          this.l = this.end
+          return false
+        }else{
+          this.addStitch(p)
+          return true
+        }
+      }
+    }
+    this.l += dl
+    if (this.l > this.end){
+      let endpoint = new Vector(this.path.getPointAtLength(this.end))
+      this.addStitch(endpoint)
+      this.l = this.end
+      return false
+    }else{
+      this.addStitch(p2)
+      return true
+    }
+  }
+
+  addBackStitch(){
+    let front = []
+    let back = []
+    let n = this.stitches.length
+    for (var i = 1; i < 4; i++){
+      front.unshift(this.stitches[i])
+      back.push(this.stitches[n - 1 - i])
+    }
+
+    for (var i = 2; i >= 0; i--){
+      front.unshift(this.stitches[i])
+      back.push(this.stitches[n - 1 - i])
+    }
+    this.stitches = front.concat(this.stitches.concat(back))
+  }
+
+  getStitchCommand(){
+    return {points: this.stitches, type: 'stitch', color: this.color, label: this.label}
+  }
+}
+
+class StitchCam{
+  constructor(svg){
+    this.runningStitch = null
+    this.runningStitchBuffer = []
+    this.pastStitchBuffer = []
+    this.svg = svg
+    this.ondone = null
+  }
+
+  set done(callback){
+    this.ondone = callback;
+  }
+  forEachCommand(callback){
+    for (var i = 0; i < this.pastStitchBuffer.length; i++){
+      let com = this.pastStitchBuffer[i]
+      callback({
+        type: com.type,
+        stitches: com.stitches,
+        color: com.color?com.color:null
+      })
+    }
+  }
+
+  //For every path in the group add a runningStitch object, set its path and add it to a buffer
+  addPathGroup(group){
+    let paths = group.getElementsByTagName('path')
+    let n = paths.length
+    for (var i = 0; i < n; i++){
+      let runningStitch = new RunningStitch(this.svg)
+      runningStitch.setPath(paths[i])
+      this.runningStitchBuffer.push(runningStitch)
+      if(this.statusTable != null){
+        runningStitch.appendStatusDisplay(this.statusTable)
+      }
+    }
+  }
+
+  //Create a runningStitch object, set its path and add it to the buffer
+  addPath(path){
+    let runningStitch = new RunningStitch(this.svg)
+    runningStitch.setPath(path)
+    this.runningStitchBuffer.push(runningStitch)
+    if(this.statusTable != null){
+      runningStitch.appendStatusDisplay(this.statusTable)
+    }
+  }
+
+  //Loads the next path
+  nextPath(){
+    if (this.runningStitchBuffer.length > 0){
+      this.runningStitch = this.runningStitchBuffer.shift()
+      return true
+    }else{
+      return false
+    }
+  }
+
+  //Starts computing the points on the paths in the buffer every animation fram
+  start(callback){
+    let design = document.getElementById('design')
+    design.style.setProperty('opacity', '0.1')
+    if (this.nextPath()){
+      let nextframe = () => {
+        if (this.next()){
+          window.requestAnimationFrame(nextframe)
+        }else if(this.ondone != null){
+          this.ondone();
+        }
+      }
+      window.requestAnimationFrame(nextframe)
+    }
+  }
+
+  //Computes the next point in the current path
+  next(){
+    if (this.runningStitch.nextStitch()){
+      return true
+    }else{
+      this.runningStitch.addBackStitch()
+      if (this.pastStitchBuffer.length > 0){
+        let jump = new Jump(this.svg)
+        jump.join(this.pastStitchBuffer[this.pastStitchBuffer.length - 1], this.runningStitch)
+        this.pastStitchBuffer.push(jump)
+        this.pastStitchBuffer.push(this.runningStitch)
+      }else{
+        let jump = new Jump(this.svg)
+        jump.join(new Vector(0,0), this.runningStitch)
+        this.pastStitchBuffer.push(jump)
+        this.pastStitchBuffer.push(this.runningStitch)
+      }
+      return this.nextPath()
+    }
+  }
 }
