@@ -395,10 +395,6 @@ class StitchRender{
     this.render_dots.setProps(this.dot_style)
   }
 
-  reset(){
-    return new StitchRender(this.render_svg)
-  }
-
   setStyle(style, key = null){
     if(key == null){
       this.line_style = Object.assign(this.line_style, style)
