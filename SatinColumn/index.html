@@ -13,29 +13,55 @@
 
   <body>
     <svg id = "svg" viewBox = "0 0 500 500">
-      <g id="O-rt">
-      	<path class="st0" d="M270.9,220c0,0,25.3,7.8,22.6,37.7c0,0.1,0,0.1,0,0.2"/>
-      	<path class="st0" d="M315.7,256.4c2.5-37.4-42.5-46.5-42.5-46.5"/>
+      <defs>
+        <filter id = 'glow' x='-50%' y='-50%' width='200%' height='200%' color-interpolation-filters="sRGB">
+<!--
+          <feMorphology operator="dilate" radius="1" in="composite" result="morphology2"/>
+          <feComposite in="SourceGraphic" in2="morphology2" operator="xor" result="composite"/>
+          <feColorMatrix type="matrix" values="0.55 0 0 0 0
+                                              0 0.55 0 0 0
+                                              0 0 0.55 0 0
+                                              0 0 0 1 0" in="morphology2" result="colormatrix4"/>
+          <feBlend mode="normal" in="SourceGraphic" in2="colormatrix4" result="blend"/> -->
+
+          <feMorphology operator="dilate" radius="1" in="composite" result="morphology2"/>
+        	<feColorMatrix type="matrix" values= "0.55 0 0 0 0
+                                                0 0.55 0 0 0
+                                                0 0 0.55 0 0
+                                                0 0 0 1 0" in="morphology2" result="colormatrix5"/>
+        	<feBlend mode="normal" in="SourceGraphic" in2="colormatrix5" result="blend"/>
+        	<feMorphology operator="dilate" radius="2" in="SourceGraphic" result="morphology3"/>
+        	<feColorMatrix type="matrix" values= "0.4 0 0 0 0
+                                                0 0.4 0 0 0
+                                                0 0 0.4 0 0
+                                                0 0 0 1 0" in="morphology3" result="colormatrix6"/>
+        	<feBlend mode="lighten" in="colormatrix6" in2="blend" result="blend1"/>
+        </filter>
+
+      </defs>
+      <g id="tl">
+      	<path class="st0" d="M33.7,84.3c-3.6-22.7,13-45.3,35.1-51.3c3.9-1.1,7.8-1.6,11.7-1.6"/>
+      	<path class="st0" d="M80.4,19.8c-4.6,0.4-9.4,1.2-14.1,2.5c-31,8.5-52.5,34-52.3,59.9"/>
       </g>
-      <g id="O-lt">
-      	<path class="st0" d="M252.6,218c-18.8,0-35.8,15.6-40.4,37.4"/>
-      	<path class="st0" d="M191.1,253.7c7.9-35.8,37.1-45.9,63.9-45.9"/>
+      <g id="tr">
+      	<path class="st0" d="M99.4,35.1c11.5,5,20.7,14.7,23.8,27.7c1.1,4.6,1.3,9.2,0.8,13.7"/>
+      	<path class="st0" d="M142.1,79.6c1.8-7.2,1.9-14.7,0.2-22.1c-4.3-18.1-19-31-38-35.9"/>
       </g>
-      <g id="O-rb">
-      	<path class="st0" d="M252.7,304.2c0,0,28.1,0.9,44.8-11.7"/>
-      	<path class="st0" d="M275.6,286.1c-9.9,5.6-20.3,6-20.3,6"/>
+      <g id="bl">
+      	<path class="st0" d="M16,95.6c5.2,16.4,19.3,28.1,37.1,32.7"/>
+      	<path class="st0" d="M58,114.9c-8.1-3.5-15-9.3-19.5-16.9"/>
       </g>
-      <g id="t-b">
-      	<path class="st0" d="M243.3,261.4l-8.9,40.7c-1,4.2-2.9,13-20.2,13l-0.1,9.3"/>
-      	<path class="st0" d="M269.9,324.5v-9.6c-8,0-19.4-0.3-17.1-10.7l2.6-12.2l9.1-42.5"/>
+      <g id="br">
+      	<path class="st0" d="M101.8,111.2c-4.1,2.6-8.5,4.6-13.2,5.9c-3.9,1.1-7.8,1.6-11.7,1.6"/>
+      	<path class="st0" d="M77.1,130.2c4.6-0.4,9.4-1.2,14.1-2.5c10.6-2.9,20.1-7.8,28-14"/>
       </g>
-      <g id="O-lb">
-      	<path class="st0" d="M236.8,292c-9.9-1.4-17.5-5.2-21.8-13.2"/>
-      	<path class="st0" d="M191.8,276c5.7,17.8,24.3,26.1,42.3,27.2"/>
+      <g id="tb">
+        <path class="st0" d="M69.3,72.7l-13.1,48.8c-2.7,9.9-11.7,16.8-21.9,16.8h-5.3v10"/>
+        <path class="st0" d="M94.4,148.3v-10h-5c-9,0-15.5-8.5-13.2-17.1l16.9-63"/>
       </g>
-      <g id="t-top">
-      	<path class="st0" d="M248.5,236.8l4-18.9l2.4-10.1c2.2-12.9-5.4-13.8-21.5-13.8v-9.6"/>
-      	<path class="st0" d="M294.8,184.5c0,0-0.3,9.6,0,9.6c-20.5,0-20.2,9.8-21.5,15.8c-1.2,5.7-2.4,10.1-2.4,10.1l-1.5,6.9"/>
+      <g id="tt">
+        <path class="st0" d="M128.4,1.7v10h-5.3c-10.3,0-19.3,6.9-21.9,16.8l-3.6,13.3"/>
+        <path class="st0" d="M75.7,48.8l5.3-20c2.3-8.7-4.2-17.1-13.2-17.1h-5v-10"/>
       </g>
     </svg>
 
@@ -54,6 +80,14 @@
   .st0{
     fill: none;
     stroke: orange;
+  }
+  .stitch{
+    fill: none;
+    stroke: green;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: url('#glow');
   }
   </style>
 

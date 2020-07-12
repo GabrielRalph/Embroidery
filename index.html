@@ -29,6 +29,29 @@
               	<feColorMatrix type="hueRotate" values="100" in="composite" result="colormatrix4"/>
               	<feBlend mode="normal" in="SourceGraphic" in2="colormatrix4" result="blend"/>
               </filter>
+              <filter id = 'stitch' x='-50%' y='-50%' width='200%' height='200%' color-interpolation-filters="sRGB">
+      <!--
+                <feMorphology operator="dilate" radius="1" in="composite" result="morphology2"/>
+                <feComposite in="SourceGraphic" in2="morphology2" operator="xor" result="composite"/>
+                <feColorMatrix type="matrix" values="0.55 0 0 0 0
+                                                    0 0.55 0 0 0
+                                                    0 0 0.55 0 0
+                                                    0 0 0 1 0" in="morphology2" result="colormatrix4"/>
+                <feBlend mode="normal" in="SourceGraphic" in2="colormatrix4" result="blend"/> -->
+
+                <feMorphology operator="dilate" radius="1" in="composite" result="morphology2"/>
+              	<feColorMatrix type="matrix" values= "0.55 0 0 0 0
+                                                      0 0.55 0 0 0
+                                                      0 0 0.55 0 0
+                                                      0 0 0 1 0" in="morphology2" result="colormatrix5"/>
+              	<feBlend mode="normal" in="SourceGraphic" in2="colormatrix5" result="blend"/>
+              	<feMorphology operator="dilate" radius="2" in="SourceGraphic" result="morphology3"/>
+              	<feColorMatrix type="matrix" values= "0.4 0 0 0 0
+                                                      0 0.4 0 0 0
+                                                      0 0 0.4 0 0
+                                                      0 0 0 1 0" in="morphology3" result="colormatrix6"/>
+              	<feBlend mode="lighten" in="colormatrix6" in2="blend" result="blend1"/>
+              </filter>
 
             </defs>
             <g id = "design">
