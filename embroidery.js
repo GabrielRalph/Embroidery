@@ -555,6 +555,20 @@ class RunningStitch{
     }
   }
 
+  compute(callback){
+    if (this.nextStitch()){
+      let nextframe = () => {
+        if (this.nextStitch()){
+          window.requestAnimationFrame(nextframe)
+        }else{
+          this.addBackStitch()
+          callback(this)
+        }
+      }
+      window.requestAnimationFrame(nextframe)
+    }
+  }
+
   nextStitch(){
     if (this.statusDisplay != null){
       this.updateStatus()

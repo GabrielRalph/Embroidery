@@ -139,6 +139,9 @@ class Vector{
   dot(p2){
     return this.x*p2.x + this.y*p2.y
   }
+	dist(p2){
+		return this.distance(p2)
+	}
   distance(p2){
     return Math.sqrt((this.x - p2.x)*(this.x - p2.x) + (this.y - p2.y)*(this.y - p2.y))
   }
