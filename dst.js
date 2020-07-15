@@ -89,6 +89,7 @@ class DSTBuffer{
     this.label = "MyCam";
     this.stitch_count = 0;
     this.color_changes = 0;
+    this.start_point = new Vector(0,0)
   }
   decToDst(p, mode = 'stitch'){
     let x = 0;
@@ -303,51 +304,85 @@ class DSTBuffer{
     this.buffer.push(243)
   }
 
-  encodeStitchCam(stitchCam){
-    let lastPoint = new Vector()
 
+  jumpAcross(point1, point2){
+
+    let m = Math.abs(point1.grad(point2))
+    let inc = new Vector()
+    if (m < 1){
+      inc.x = 118*(point2.x - point1.x)/Math.abs(point2.x - point1.x);
+      inc.y = 118*m*(point2.y - point1.y)/Math.abs(point2.y - point1.y);
+    }else{
+      inc.x = 118*(point2.x - point1.x)/Math.abs(point2.x - point1.x)/m;
+      inc.y = 118*(point2.y - point1.y)/Math.abs(point2.y - point1.y);
+    }
+
+    let inc_dist = inc.norm()
+    let move_dist = point1.distance(point2)
+    let n = Math.floor(move_dist/inc_dist)
+
+    let float_points = [point1]
+    let jump_path = new SPath()
+    jump_path.push(point1)
+
+    for (var i = 0; i < n; i++){
+      float_points.push(float_points[i].add(inc))
+      jump_path.push(float_points[i].add(inc))
+    }
+    jump_path.push(point2)
+    jump_path.mode = 'jump';
+    return jump_path
+  }
+
+  encodeSPath(sPath){
+    sPath.reflect()
+    sPath.tieOff()
+
+    let lastPoint = sPath.start.point
+    let jump = null
+    if (lastPoint.distance(this.start_point) > 5){
+      jump = this.jumpAcross(this.start_point, lastPoint)
+    }
     let start = 1;
 
     let lastColor = null;
 
+    if (jump != null){
+      let cur = jump.start;
+      while (cur != jump.end){
+        cur = cur.next;
+        let dPoint = cur.point.sub(cur.last.point)
+        this.addPoint(dPoint, 'jump')
 
-    stitchCam.forEachCommand((op) => {
-      let points = op.stitches
-      if(op.color != null&&lastColor != null&&lastColor != op.color){
-        this.addPoint('color')
-        this.color_changes ++
-      }else if(op.color != null){
-        lastColor = op.color
+        this.minx = cur.point.x<this.minx?cur.point.x:this.minx
+        this.miny = cur.point.y<this.miny?cur.point.y:this.miny
+        this.maxx = cur.point.x>this.maxx?cur.point.x:this.maxx
+        this.maxy = cur.point.y>this.maxy?cur.point.y:this.maxy
       }
-      for (var i = start; i < points.length; i++){
-        this.stitch_count++
-        let p = points[i]
-        let dPoint = p.sub(lastPoint)
-        this.addPoint(dPoint, op.type)
+    }
+    lastPoint = sPath.start
+    while(lastPoint != sPath.end){
+      lastPoint = lastPoint.next;
+      let dPoint = lastPoint.point.sub(lastPoint.last.point)
+      this.addPoint(dPoint, 'stitch')
 
-        this.minx = p.x<this.minx?p.x:this.minx
-        this.miny = p.y<this.miny?p.y:this.miny
-        this.maxx = p.x>this.maxx?p.x:this.maxx
-        this.maxy = p.y>this.maxy?p.y:this.maxy
-
-        lastPoint = p
-      }
-      start = 0;
-    })
+      this.minx = lastPoint.point.x<this.minx?lastPoint.point.x:this.minx
+      this.miny = lastPoint.point.y<this.miny?lastPoint.point.y:this.miny
+      this.maxx = lastPoint.point.x>this.maxx?lastPoint.point.x:this.maxx
+      this.maxy = lastPoint.point.y>this.maxy?lastPoint.point.y:this.maxy
+    }
     this.addEnd()
   }
-
 }
-
 class DSTExporter{
-  constructor(element){
+  constructor(element = null){
     this.download_element = element;
     this.download_element.style.setProperty('visibility', 'hidden')
     this.dstBuffer = new DSTBuffer()
   }
 
-  exportStitchCam(stitchCam){
-    this.dstBuffer.encodeStitchCam(stitchCam)
+  exportSPath(sPath){
+    this.dstBuffer.encodeSPath(sPath)
 
     let header = DSTHeader(this.dstBuffer)
     let dst = header.concat(this.dstBuffer.buffer)
@@ -365,6 +400,7 @@ class DSTExporter{
     let dst_blob = new Blob([array], {type: "application/octet-stream"})
     var url = window.URL.createObjectURL(dst_blob);
 
+    console.log(this.download_element);
     this.download_element.href = url;
     this.download_element.style.setProperty('visibility', 'visible')
   }

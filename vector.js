@@ -9,6 +9,8 @@ class Vector{
       this.x = x.x
       this.y = x.y
     }
+		this.x = parseFloat(this.x)
+		this.y = parseFloat(this.y)
 	}
 
 	round(){

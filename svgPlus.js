@@ -19,6 +19,16 @@ SVGElement.prototype.setStyles = function (styles) {
     }
   }
 }
+SVGElement.prototype.getViewBox = function () {
+  let viewBox_string = this.getAttribute('viewBox');
+  let viewBox_array = viewBox_string.split(' ');
+  let offset = new Vector(viewBox_array)
+  let size = new Vector(viewBox_array, 2)
+  return {
+    size: size,
+    offset: offset
+  }
+}
 SVGElement.prototype.getLastChild = function () {
   return this.children[this.children.length - 1]
 }

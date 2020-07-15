@@ -7,7 +7,14 @@ class Stitch{
     this.next = null;
     this.last = null;
   }
-
+  reflect(mode = 'v'){
+    if (mode.indexOf('v') != -1){
+      this.point.x = this.point.x*-1
+    }
+    if (mode.indexOf('h') != -1){
+      this.point.y = this.point.y*-1
+    }
+  }
   set next(val){
     this._next = val;
   }
@@ -29,7 +36,7 @@ class Stitch{
   }
 
   toString(){
-    return `${this.last == null?'M':''}${this.point} ${this.next!=null?('L' + this.next):('')}`
+    return `${this.last == null?'M':''}${this.point}${this.next!=null?('L' + this.next):('')}`
   }
 }
 
@@ -54,6 +61,30 @@ class SPath{
     child.parent = this;
     child.setVisualizerParent(this.visualizer_group)
   }
+  removeChild(child_to_remove){
+    let newChildren = [];
+    this.visualizer_group.removeChild(child_to_remove.visualizer_group)
+
+    for (var i = 0; i < this.children.length; i++){
+      let child = this.children[i]
+      if (child != child_to_remove){
+        newChildren.push(child)
+      }
+    }
+    this.children = newChildren
+    if (this.children.length == 1){
+      this.set(this.children[0])
+    }
+    this.sTree.VNodeRender();
+  }
+
+  set(sPath){
+    this.start = sPath.start;
+    this.end = sPath.end;
+    this.color = sPath.color;
+    this.mode = sPath.mode;
+    this.children = sPath.children;
+  }
 
   build(group){
     let mode = group.getAttribute('mode')
@@ -68,11 +99,35 @@ class SPath{
         sChild.build(child)
       }
 
-    //If leaf path node
+      //If leaf path node
     }else if (mode == 'RunningStitch'||mode == 'SatinColumn'){
       this.stitchGenerator = new StitchPath(group, this)
       this.mode = 'uncomputed'
+    }else if(mode == 'manual'){
+      let d = group.children[0].getD();
+      d = d.replace(' ', '').replace('M', '').split('L');
+      for (var i = 0; i < d.length; i++){
+        let ps = d[i].split(',')
+        let p = new Vector(ps[0], ps[1])
+        this.push(new Stitch(p))
+      }
+      this.mode = 'computed'
     }
+  }
+
+  focus(){
+    let point = this.start.point.add(this.end.point).div(2)
+    let svg = this.sTree.output_svg;
+    let box = svg.parentNode;
+
+    let svg_size = new Vector(svg.clientWidth, svg.clientHeight);
+    let box_size = new Vector(box.clientWidth, box.clientHeight);
+    let viewbox = svg.getViewBox()
+
+    point = point.sub(viewbox.offset)
+    let here = point.mul(svg_size).div(viewbox.size)
+    here = here.sub(box_size.div(2))
+    box.scrollTo(here.x, here.y)
   }
 
   // Path visualizer
@@ -85,6 +140,7 @@ class SPath{
     this.visualizer_group = create('g')
 
     this.visualizer_path = create('path')
+    this.visualizer_path.SPath = this
     this.visualizer_path.setAttribute('class','stitch-style')
 
     this.visualizer_parent = svg
@@ -114,13 +170,25 @@ class SPath{
 
   // StitchPath functions
   compute(callback){
-    if (this.mode != 'join'){
+    if(this.mode == 'uncomputed'){
+      this.vNode.setColor('#AAFFAA')
+      this.mode == 'computing'
       this.stitchGenerator.computeOnAnimationFrame(() => {
         this.mode = 'computed'
-        callback()
+        if (callback){
+          callback()
+        }
       })
     }
   }
+
+  computeAll(callback){
+    this.compute(callback)
+    for (var i = 0; i < this.children.length; i++){
+      this.children[i].computeAll(callback)
+    }
+  }
+
 
   // Setter Getter
   set color(val){
@@ -258,11 +326,32 @@ class SPath{
     } while(res == false);
     return res
   }
+  insertLoop(loop, location){
+    loop.push(loop.start.clone())
+    loop.push(location.clone())
+
+    this.putAfter(loop, location)
+  }
 
   isLoop(max_length = 40){
     if (this.end != null && this.start != null){
       return this.end.distance(this.start) < max_length
     }
+  }
+  isComputed(){
+    let recursiveHelp = (node) => {
+      let res = true
+      for (var i = 0; i < node.children.length; i++){
+        let child = this.children[i]
+        if (child.mode == 'join'){
+          res &= recursiveHelp(child)
+        }else{
+          res &= child.mode == 'computed'
+        }
+      }
+      return res
+    }
+    return recursiveHelp(this)
   }
 
   // Link list smart functions
@@ -320,6 +409,15 @@ class SPath{
     while (cur != this.start){
       cur = cur.last;
       this.push(cur.clone())
+    }
+  }
+
+  reflect(mode = 'v'){
+    let cur = this.start;
+    cur.reflect(mode)
+    while(cur != this.end){
+      cur = cur.next
+      cur.reflect(mode);
     }
   }
 
@@ -413,7 +511,10 @@ class StitchPath{
       }
       window.requestAnimationFrame(nextframe)
     }
+    this.sPath.focus()
   }
+
+
 
   //Add a stitch
   __addStitch(point){
@@ -555,6 +656,7 @@ class StitchPath{
 
 class STree{
   constructor(input_svg, output_svg, node_svg){
+    this.box = document.getElementById('output-svg-box');
     this.input_svg = input_svg
     this.output_svg = output_svg
     this.node_svg = null
@@ -565,7 +667,10 @@ class STree{
 
   VNodeSetup(svg){
     this.node_svg = svg;
+    this.VNodeRender()
+  }
 
+  VNodeRender(){
     let height = 0;
 
     let recursiveHelp = (node, level=0, lastWidth = 0) => {
@@ -576,26 +681,39 @@ class STree{
 
         var width = 0;
         for(var i in node.children){
-          width += recursiveHelp(node.children[i], level + 1, width + lastWidth);
+          width += recursiveHelp(node.children[i], level + 2, width + lastWidth);
         }
 
         node.vNode.width = width;
-        node.vNode.pos = new Vector(level, lastWidth + width/2);
-        node.vNode.render()
+        node.vNode.pos = new Vector(lastWidth + width/2, level);
+
         return width
 
-      // Leaf
+        // Leaf
       }else{
         node.vNode.width = 1;
-        node.vNode.pos = new Vector(level, lastWidth + 0.5);
-        node.vNode.render()
+        node.vNode.pos = new Vector(lastWidth + 0.5, level);
         return 1
       }
     }
     let width = recursiveHelp(this.root)
     this.node_svg.setProps({
-      viewBox: `0 0 50 50`
+      viewBox: `0 -1 ${width} ${height + 2}`
     })
+
+    this.node_svg.innerHTML = ''
+    let links = create('g')
+    this.node_svg.appendChild(links)
+    let recursiveHelp2 = (node) => {
+      node.vNode.addNode(this.node_svg)
+      if (node.parent){
+        links.innerHTML += node.vNode.link(node.parent.vNode)
+      }
+      for (var i = 0; i < node.children.length; i++){
+        recursiveHelp2(node.children[i])
+      }
+    }
+    recursiveHelp2(this.root)
   }
 
 
@@ -609,22 +727,70 @@ class VNode{
 
   }
 
-  render(){
-    this.node_template = `
-    <ellipse cx = '0' cy = '0' rx = '50' ry = '50' />
-    <text>Hey</text>
-    `
-    this.el = create('svg');
+  update(){
+    let mode = this.sPath.mode;
+    if (mode == 'uncomputed'){
+      this.setColor('red')
+    }else if (mode == 'join'){
+      this.setColor('grey')
+    }else if(mode == 'computed'){
+      this.setColor('green')
+    }
+  }
 
+  setColor(color){
+    if (this.el){
+      this.el.setFill(color)
+    }
+  }
+
+  get mode_color(){
+    let l = {
+      join: 'grey',
+      uncomputed: 'red',
+      computed: 'green'
+    }
+    return l[this.sPath.mode]
+  }
+
+  onClick(){
+    let mode = this.sPath.mode;
+    if (mode == 'uncomputed'){
+      this.sPath.compute(() => {
+        this.sPath.sTree.VNodeRender()
+      })
+    }else if (mode == 'join'){
+      if (this.sPath.isComputed()){
+        this.setColor('#FFFFFF')
+        let join = new JoinFriend(this.sPath.children)
+      }else{
+        this.sPath.computeAll()
+      }
+    }else if(mode == 'computed'){
+      tools.style.setProperty('visibility', 'visible')
+      let exporter = new DSTExporter(this.sPath.sTree.download_element)
+      exporter.exportSPath(this.sPath)
+    }
+  }
+  addNode(svg){
+    this.el = create('ellipse')
     this.el.setProps({
-      viewBox: '-50 -50 100 100',
-      x: `${this.pos.x}`,
-      y: `${this.pos.y}`,
-      width: '0.8',
-      preserveAspectRation: 'xMidYMid'
-    });
-    this.el.innerHTML = this.node_template
-    this.sPath.sTree.node_svg.appendChild(this.el)
+      fill: this.mode_color,
+      cx: `${this.pos.x}`,
+      cy: `${this.pos.y}`,
+      rx: '0.3',
+      ry: '0.3',
+    })
+    svg.appendChild(this.el)
+    this.el.onclick = () => {
+      this.onClick()
+    }
+  }
+
+  link(parent){
+    let c1 = this.pos.sub(new Vector(0, 1))
+    let c2 = parent.pos.add(new Vector(0, 1))
+    return `<path d = 'M${this.pos}C${c1},${c2},${parent.pos}' fill = 'none' stroke = 'red' stroke-width = '0.05'/>`
   }
 
   set pos(pos){
@@ -638,5 +804,200 @@ class VNode{
   }
   get width(){
     return this._width
+  }
+}
+
+class JoinFriend{
+  constructor(sPaths){
+    this.toolBox = document.getElementById('tool-box')
+    this.toolBox.style.setProperty('visibility', 'visible')
+    this.sPaths = sPaths
+
+    this.sPath = this.sPaths.shift()
+    this.sPath_2 = this.sPath_1;
+
+    this.svg = this.sPath.sTree.output_svg
+    this.closest = null;
+    this.merger = true;
+    this.insert_location = null
+
+    this.cursors = create('g');
+    this.svg.appendChild(this.cursors)
+    this.addEventListners()
+    this.createCursor()
+    this.highlight()
+  }
+
+  addEventListners(){
+    this.svg.onclick = (e) => {
+      this.click(e)
+    }
+
+    this.svg.onmousemove = (e) => {
+      this.mousemove(e)
+    }
+
+    this.toolBox.onwheel = (e) => {
+      this.wheel(e)
+    }
+
+    this.toolBox.onclick = (e) => {
+      this.click(e)
+    }
+  }
+  stopEventListners(){
+    this.svg.onclick = null
+    this.svg.onmousemove = null
+  }
+  clearCursor(){
+    this.svg.removeChild(this.cursors)
+    this.toolBox.style.setProperty('visibility', 'hidden')
+  }
+  createCursor(){
+    this.cursor = create('ellipse')
+    this.cursor.setProps({
+      cx: '0',
+      cy: '0',
+      rx: '5',
+      ry: '5',
+      fill: 'none',
+      stroke: 'green'
+    })
+    this.cursors.appendChild(this.cursor)
+  }
+
+  highlight(){
+    this.svg.parentNode.style.setProperty('--hide', 0.3)
+    this.sPath.visualizer_path.setProps({
+      style: {
+        opacity: '1'
+      }
+    })
+  }
+  unhighlight(){
+    this.svg.parentNode.style.setProperty('--hide', 1)
+    this.sPath.visualizer_path.setProps({
+      style: {
+        opacity: 'var(--hide)'
+      }
+    })
+  }
+
+  wheel(e){
+    if(this.closest == null){
+      console.log(this.closest);
+        this.closest = {
+          node: this.sPath.start,
+          i: 0,
+        }
+    }else{
+      if (e.deltaY > 0){
+        if (this.closest.node == this.sPath.end){
+          this.closest.node = this.sPath.start;
+          this.closest.i = 0;
+        }else{
+          this.closest.node = this.closest.node.next;
+          this.closest.i ++;
+        }
+      }else{
+        if (this.closest.node == this.sPath.start){
+          this.closest.node = this.sPath.start;
+          this.closest.i = this.sPath.size - 1;
+        }else{
+          this.closest.node = this.closest.node.last;
+          this.closest.i --;
+        }
+      }
+      this.setCursor(this.closest.node.point)
+    }
+  }
+
+  click(){
+    this.unhighlight()
+    if (this.merger){
+      this.merger = false;
+
+      this.insert_location = this.closest.node
+
+      this.sPath_2 = this.sPath;
+      this.sPath = this.sPaths.shift();
+
+      this.cursor.setStroke('#8888FF')
+      this.cursor.setFill('#0000FF')
+      this.createCursor()
+      this.highlight()
+    }else{
+      this.sPath.rotate(this.closest.i)
+      this.sPath_2.insertLoop(this.sPath, this.insert_location)
+      this.sPath_2.parent.removeChild(this.sPath)
+
+      if (this.sPaths.length < 1){
+        this.stopEventListners()
+        this.clearCursor()
+        this.sPath_2.parent.set(this.sPath_2)
+        this.sPath_2.parent.vNode.update()
+      }else{
+        this.sPath = this.sPath_2;
+        this.merger = true;
+        this.highlight()
+      }
+    }
+  }
+
+  mousemove(event){
+    let p = this.relMousePoint(event)
+    let c = this.closestPoint(p)
+    this.closest = c
+    this.setCursor(c.node.point)
+  }
+
+  relMousePoint(event){
+    let m = new Vector(event)
+    let vb = this.svg.getAttribute('viewBox').split(' ')
+    let vs = new Vector(vb[2], vb[3])
+    vb = new Vector(vb[0], vb[1])
+    let size = new Vector(this.svg.clientWidth, this.svg.clientHeight);
+    let fact = vs.div(size)
+    var t = this.svg.getBoundingClientRect().top;
+    var l = this.svg.getBoundingClientRect().left;
+    let offset = new Vector(l, t)
+
+    let point = m.sub(offset).mul(fact).add(vb)
+    return point
+  }
+
+  setCursor(p){
+    if (this.closest != null){
+      let disp = `path-offset: ${this.closest.i}`
+      this.toolBox.children[0].innerHTML = disp;
+    }
+    this.cursor.setProps({
+      cx: `${p.x}`,
+      cy: `${p.y}`
+    })
+  }
+
+  closestPoint(p){
+    let i = 0;
+    let cur = this.sPath.start
+    let d = cur.point.distance(p)
+    let soln = {
+      node: cur,
+      i: 0,
+      d: d
+    }
+    while (cur != this.sPath.end) {
+      cur = cur.next;
+      i++;
+      d = cur.point.distance(p);
+      if (d < soln.d){
+        soln = {
+          node: cur,
+          i: i,
+          d: d
+        }
+      }
+    }
+    return soln
   }
 }
