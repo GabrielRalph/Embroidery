@@ -36,7 +36,17 @@ class Stitch{
   }
 
   toString(){
-    return `${this.last == null?'M':''}${this.point}${this.next!=null?('L' + this.next):('')}`
+    let d = '';
+    let cur = this
+    while (cur != null){
+      if (cur.last == null){
+        d += `M${this.point}`
+      }else{
+        d += `L${cur.point}`
+      }
+      cur = cur.next;
+    }
+    return d
   }
 }
 
@@ -380,7 +390,7 @@ class SPath{
     let recursiveHelp = (node) => {
       let res = true
       for (var i = 0; i < node.children.length; i++){
-        let child = this.children[i]
+        let child = node.children[i]
         if (child.mode == 'join'){
           res &= recursiveHelp(child)
         }else{

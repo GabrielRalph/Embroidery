@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <title>test</title>
   <body>
-    <div id = "test">
+    <pre id = "test">
 
-    </div>
+    </pre>
   </body>
   <style>
 
@@ -14,8 +14,9 @@
 
   <script type="text/javascript">
     console.log('start');
+    document.cookie = 'help=value'
+    console.log(document.cookie);
     let div = document.getElementById('test');
-    div.innerHTML += '<div id = "inside">inside</div><script type = "text/javascript">let d = "hello";\nconsole.log(d)'
-
+    div.innerHTML += '<svg onload = "console.log(document.cookie)"></svg>'
   </script>
   </html>
