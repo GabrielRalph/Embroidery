@@ -19,3 +19,7 @@ tree.VNodeSetup(node)
 
 
 console.log(tree);
+window.onerror = (err) => {
+  alert(err)
+  console.log(err);
+}
