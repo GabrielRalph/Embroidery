@@ -7,10 +7,20 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="Stitch" content="Stitch something">
 
+  <link rel = "stylesheet" href = "./Fonts/stylesheet.css" type="text/css" />
+
   <script type="text/javascript" src="./vector.js"></script>
-  <script type="text/javascript" src="./stitch.js"></script>
-  <script type="text/javascript" src="./svgPlus.js"></script>
   <script type="text/javascript" src="./dst.js"></script>
+
+  <script type="text/javascript" src="./Stitch/VNode.js"></script>
+  <script type="text/javascript" src="./Stitch/STree.js"></script>
+  <script type="text/javascript" src="./Stitch/JoinFriend.js"></script>
+
+  <script type="text/javascript" src="./Stitch/Stitch.js"></script>
+  <script type="text/javascript" src="./Stitch/StitchPath.js"></script>
+  <script type="text/javascript" src="./Stitch/SPath.js"></script>
+
+  <script type="text/javascript" src="./svgPlus.js"></script>
 
   <body>
     <div id = "stitch">
@@ -472,6 +482,12 @@
 
       </div>
       <div id = "tree-visualizer">
+        <div id = "Open-Svg">
+          Open Svg
+        </div>
+        <div id = "Save-Svg">
+          Save Svg
+        </div>
         <svg id = "node_render">
         </svg>
       </div>
@@ -514,6 +530,30 @@
   </body>
   <style>
 
+    #Open-Svg{
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 5px 15px;
+      line-height: 20px;
+      margin: 0 calc(3*var(--border));
+      border: var(--border) solid var(--border-color);
+      border-radius: 0 0 20px 20px;
+    }
+
+    #Save-Svg{
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 5px 15px;
+      line-height: 20px;
+      margin: 0 calc(27.5*var(--border));
+      border: var(--border) solid var(--border-color);
+      border-radius: 0 0 20px 20px;
+    }
+
+
+
     /* ::-webkit-scrollbar {
       display: none;
     } */
@@ -543,7 +583,7 @@
       background: transparent;
     }
   body{
-    font-family: sans-serif;
+    font-family: 'Guru Serif';
     margin: 0;
     --lh: 35px;
     --br: calc(var(--lh)*0.75);

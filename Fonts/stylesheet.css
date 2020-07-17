@@ -1,0 +1,36 @@
+@font-face {
+    font-family: 'Guru Bold';
+    src: url('subset-Guru-Regular.eot');
+    src: url('subset-Guru-Regular.eot?#iefix') format('embedded-opentype'),
+        url('subset-Guru-Regular.woff2') format('woff2'),
+        url('subset-Guru-Regular.woff') format('woff'),
+        url('subset-Guru-Regular.svg#Guru-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+@font-face {
+    font-family: 'Guru Sans';
+    src: url('GuruSans-Regular.eot');
+    src: url('GuruSans-Regular.eot?#iefix') format('embedded-opentype'),
+        url('GuruSans-Regular.woff2') format('woff2'),
+        url('GuruSans-Regular.woff') format('woff'),
+        url('GuruSans-Regular.ttf') format('truetype'),
+        url('GuruSans-Regular.svg#GuruSans-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Guru Serif';
+    src: url('GuruSerif-Regular.eot');
+    src: url('GuruSerif-Regular.eot?#iefix') format('embedded-opentype'),
+        url('GuruSerif-Regular.woff2') format('woff2'),
+        url('GuruSerif-Regular.woff') format('woff'),
+        url('GuruSerif-Regular.ttf') format('truetype'),
+        url('GuruSerif-Regular.svg#GuruSerif-Regular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
