@@ -335,7 +335,7 @@ class DSTBuffer{
   }
 
   encodeSPath(sPath){
-    sPath.reflect()
+    sPath.reflect('h')
     sPath.tieOff()
 
     let lastPoint = sPath.start.point

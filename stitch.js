@@ -42,6 +42,9 @@ class Stitch{
 
 class SPath{
   constructor(sTree){
+    this.sTree = sTree;
+    this.vNode = new VNode(this)
+
     this._end = null;
     this._start = null;
     this.size = 0;
@@ -51,9 +54,6 @@ class SPath{
 
     this.parent = null;
     this.children = [];
-
-    this.sTree = sTree;
-    this.vNode = new VNode(this)
   }
 
   appendChild(child){
@@ -82,8 +82,13 @@ class SPath{
     this.start = sPath.start;
     this.end = sPath.end;
     this.color = sPath.color;
+    this._mode = null;
     this.mode = sPath.mode;
     this.children = sPath.children;
+    this.visualizer_group.innerHTML = ''
+    if (sPath.visualizer_group){
+      this.visualizer_group.appendChild(sPath.visualizer_path)
+    }
   }
 
   build(group){
@@ -103,7 +108,7 @@ class SPath{
     }else if (mode == 'RunningStitch'||mode == 'SatinColumn'){
       this.stitchGenerator = new StitchPath(group, this)
       this.mode = 'uncomputed'
-    }else if(mode == 'manual'){
+    }else if(mode == 'computed'){
       let d = group.children[0].getD();
       d = d.replace(' ', '').replace('M', '').split('L');
       for (var i = 0; i < d.length; i++){
@@ -116,7 +121,18 @@ class SPath{
   }
 
   focus(){
-    let point = this.start.point.add(this.end.point).div(2)
+    let point = this.end.point
+    let cur = this.end
+    if(cur != this.start){
+      for (var i = 0; i < 5; i++){
+        cur = cur.last;
+        point = point.add(cur.point)
+        if(cur == this.start){
+          break;
+        }
+      }
+    }
+    point = point.div(5)
     let svg = this.sTree.output_svg;
     let box = svg.parentNode;
 
@@ -171,8 +187,7 @@ class SPath{
   // StitchPath functions
   compute(callback){
     if(this.mode == 'uncomputed'){
-      this.vNode.setColor('#AAFFAA')
-      this.mode == 'computing'
+      this.mode = 'computing'
       this.stitchGenerator.computeOnAnimationFrame(() => {
         this.mode = 'computed'
         if (callback){
@@ -208,6 +223,29 @@ class SPath{
   }
   get start(){
     return this._start;
+  }
+  set mode(mode){
+    this._mode = mode;
+    if (this.visualizer_group){
+      this.visualizer_group.setAttribute('mode',mode)
+    }
+    if (this.vNode){
+      this.vNode.update()
+    }
+  }
+  get mode(){
+    return this._mode
+  }
+  set progress(progress){
+    this._progress = progress;
+    this.vNode.update();
+  }
+  get progress(){
+    if (this._progress){
+      return this._progress
+    }else{
+      return null
+    }
   }
 
   // Link list insert functions
@@ -480,7 +518,7 @@ class StitchPath{
     this['__start' + this.mode]()
   }
 
-  ['progress'](){
+  get progress(){
     let progress = 0;
     if (this.l && this.end){
       progress = this.l/this.end
@@ -499,6 +537,8 @@ class StitchPath{
       let nextframe = () => {
         if (this.nextStitch()){
           window.requestAnimationFrame(nextframe)
+          this.sPath.progress = this.progress
+          this.sPath.focus()
         }else{
           if (callback){
             if(this.loop == 'back'){
@@ -705,7 +745,7 @@ class STree{
     let links = create('g')
     this.node_svg.appendChild(links)
     let recursiveHelp2 = (node) => {
-      node.vNode.addNode(this.node_svg)
+      this.node_svg.appendChild(node.vNode.node)
       if (node.parent){
         links.innerHTML += node.vNode.link(node.parent.vNode)
       }
@@ -724,17 +764,12 @@ class VNode{
     this.sPath = sPath;
     this._pos = null;
     this._width = 0;
-
-  }
-
-  update(){
-    let mode = this.sPath.mode;
-    if (mode == 'uncomputed'){
-      this.setColor('red')
-    }else if (mode == 'join'){
-      this.setColor('grey')
-    }else if(mode == 'computed'){
-      this.setColor('green')
+    this.rad = 0.3;
+    this.colors = {
+      join: '#ffd400',
+      uncomputed: '#ff3765',
+      computed: '#2988ff',
+      computing: '#9dc9ff'
     }
   }
 
@@ -744,14 +779,6 @@ class VNode{
     }
   }
 
-  get mode_color(){
-    let l = {
-      join: 'grey',
-      uncomputed: 'red',
-      computed: 'green'
-    }
-    return l[this.sPath.mode]
-  }
 
   onClick(){
     let mode = this.sPath.mode;
@@ -772,27 +799,58 @@ class VNode{
       exporter.exportSPath(this.sPath)
     }
   }
-  addNode(svg){
-    this.el = create('ellipse')
-    this.el.setProps({
+
+  update(){
+    if (this.el){
+      this.el.innerHTML = ''
+      this.el.appendChild(this.ellipse)
+      this.el.appendChild(this.progress)
+      this.el.onclick = () => {
+        this.onClick()
+      }
+    }
+  }
+
+  get node(){
+    this.el = create('g')
+    this.update();
+    return this.el
+  }
+
+  get ellipse(){
+    let ellipse = create('ellipse')
+    ellipse.setProps({
       fill: this.mode_color,
       cx: `${this.pos.x}`,
       cy: `${this.pos.y}`,
-      rx: '0.3',
-      ry: '0.3',
+      rx: `${this.rad}`,
+      ry: `${this.rad}`,
     })
-    svg.appendChild(this.el)
-    this.el.onclick = () => {
-      this.onClick()
+    return ellipse
+  }
+  get progress(){
+    let path = create('path');
+    let progress = this.sPath.progress;
+    if(this.sPath.progress != null){
+      let p1 = new Vector(0, - this.rad);
+      let p2 = p1.rotate(Math.PI*2*progress);
+      p1 = p1.add(this.pos)
+      p2 = p2.add(this.pos)
+      path.setD(`M${this.pos}L${p1}A${this.rad},${this.rad},0,${progress>0.5?'1':'0'},1,${p2}`)
+      path.setFill(this.colors['computed'])
     }
+    return path
   }
 
   link(parent){
     let c1 = this.pos.sub(new Vector(0, 1))
     let c2 = parent.pos.add(new Vector(0, 1))
-    return `<path d = 'M${this.pos}C${c1},${c2},${parent.pos}' fill = 'none' stroke = 'red' stroke-width = '0.05'/>`
+    return `<path d = 'M${this.pos}C${c1},${c2},${parent.pos}' fill = 'none' stroke = '#04a2ff' stroke-width = '0.05'/>`
   }
 
+  get mode_color(){
+    return this.colors[this.sPath.mode]
+  }
   set pos(pos){
     this._pos = pos;
   }
