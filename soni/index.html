@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>test</title>
+  <script src = "whitelist.js" type = "text/javascript"></script>
   <body>
     <textarea id = "input-html" type = "text"></textarea>
     <div id = "output">
@@ -57,21 +58,16 @@
       temp_output.onerror = (err) => {
         err.preventDefault()
       }
-      console.log(temp_output);
       let new_output = null;
       if (temp_output.getElementsByTagName('parsererror').length > 0){
         new_output = temp_output.getElementsByTagName('parsererror')[0]
       }else{
         new_output = copy(temp_output.firstChild, whitelist)
       }
-
-
       output_elem.innerHTML = ''
       output_elem.appendChild(new_output)
-      console.log('xx');
     }
 
-    let whitelist = ['class', 'style']
 
     let copy = (el, whitelist = []) => {
       let transverse = (node) => {
@@ -81,11 +77,14 @@
           root.innerHTML = node.nodeValue;
         }else{
           root = document.createElement(node.nodeName)
-          for (var i = 0; i < whitelist.length; i++){
-
-            let att = node.getAttribute(whitelist[i]);
-            if( att != null){
-              root.setAttribute(whitelist[i], att)
+          for (var key in whitelist){
+            if (whitelist[key] instanceof Function){
+              let att_value = node.getAttribute(key);
+              if( att_value != null){
+                if (whitelist[key](att_value)){
+                  root.setAttribute(key, att_value)
+                }
+              }
             }
           }
           for (var i = 0; i < node.childNodes.length; i++){
