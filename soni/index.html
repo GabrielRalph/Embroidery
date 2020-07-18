@@ -4,19 +4,99 @@
   <meta charset="utf-8">
   <title>test</title>
   <body>
-    <pre id = "test">
+    <textarea id = "input-html" type = "text"></textarea>
+    <div id = "output">
 
-    </pre>
+    </div>
   </body>
   <style>
+  body{
+    --margin: 10px;
+    --padding: 15px;
+    background: #f1ff7e;
+    margin: var(--margin);
+    border: none;
+  }
+  #input-html{
+    word-break: break-word;
+    border: none;
+    outline: none;
+    float: left;
+    padding: var(--padding);
+    width: calc((100vw - 3*var(--margin)) / 2 - 2 * var(--padding) - 10px);
+    height: calc(100vh - 2*var(--margin) - 2 * var(--padding));
+  }
+  #output{
+    float: right;
+    background: white;
+    padding: var(--padding);
+    width: calc((100vw - 3*var(--margin)) / 2 - 2 * var(--padding));
+    height: calc(100vh - 2 *var(--margin) - 2 * var(--padding));
+  }
+  .red{
+    color: red;
+  }
+  parsererror {
+    border-radius: 20px;
+    color: white;
+    border: none;
+  }
+  parsererror div{
+    color: red;
+  }
 
   </style>
-
   <script type="text/javascript">
-    console.log('start');
-    document.cookie = 'help=value'
-    console.log(document.cookie);
-    let div = document.getElementById('test');
-    div.innerHTML += '<svg onload = "console.log(document.cookie)"></svg>'
+    let input = document.getElementById('input-html')
+    let output_elem = document.getElementById('output')
+
+
+    window.onclick = () => {
+      let temp_output = new DOMParser().parseFromString(`<div>${input.value}</div>`, 'text/xml')
+      temp_output.onerror = (err) => {
+        err.preventDefault()
+      }
+      console.log(temp_output);
+      let new_output = null;
+      if (temp_output.getElementsByTagName('parsererror').length > 0){
+        new_output = temp_output.getElementsByTagName('parsererror')[0]
+      }else{
+        new_output = copy(temp_output.firstChild, whitelist)
+      }
+
+
+      output_elem.innerHTML = ''
+      output_elem.appendChild(new_output)
+      console.log('xx');
+    }
+
+    let whitelist = ['class', 'style']
+
+    let copy = (el, whitelist = []) => {
+      let transverse = (node) => {
+        let root = null;
+        if (node.nodeName == '#text'){
+          root = document.createElement('TEXT')
+          root.innerHTML = node.nodeValue;
+        }else{
+          root = document.createElement(node.nodeName)
+          for (var i = 0; i < whitelist.length; i++){
+
+            let att = node.getAttribute(whitelist[i]);
+            if( att != null){
+              root.setAttribute(whitelist[i], att)
+            }
+          }
+          for (var i = 0; i < node.childNodes.length; i++){
+            let child = transverse(node.childNodes[i])
+            root.appendChild(child)
+          }
+        }
+        return root
+      }
+      return transverse(el)
+    }
+
+
   </script>
   </html>
