@@ -52,53 +52,15 @@
 
   </style>
   <script type="text/javascript">
-    let input = document.getElementById('input-html')
-    let output_elem = document.getElementById('output')
+  let input = document.getElementById('input-html')
+  let output_elem = document.getElementById('output')
+  let smartParse = new SmartParse(whitelist)
+  window.onclick = () => {
+    let output = smartParse.parseString(input.value)
+    output_elem.innerHTML = ''
+    output_elem.appendChild(output)
+  }
 
-
-    window.onclick = () => {
-      let temp_output = new DOMParser().parseFromString(`<div>${input.value}</div>`, 'text/xml')
-      temp_output.onerror = (err) => {
-        err.preventDefault()
-      }
-      let new_output = null;
-      if (temp_output.getElementsByTagName('parsererror').length > 0){
-        new_output = temp_output.getElementsByTagName('parsererror')[0]
-      }else{
-        new_output = copy(temp_output.firstChild, whitelist)
-      }
-      output_elem.innerHTML = ''
-      output_elem.appendChild(new_output)
-    }
-
-
-    let copy = (el, whitelist = []) => {
-      let transverse = (node) => {
-        let root = null;
-        if (node.nodeName == '#text'){
-          root = document.createElement('TEXT')
-          root.innerHTML = node.nodeValue;
-        }else{
-          root = document.createElement(node.nodeName)
-          for (var key in whitelist){
-            if (whitelist[key] instanceof Function){
-              let att_value = node.getAttribute(key);
-              if( att_value != null){
-                if (whitelist[key](att_value)){
-                  root.setAttribute(key, att_value)
-                }
-              }
-            }
-          }
-          for (var i = 0; i < node.childNodes.length; i++){
-            let child = transverse(node.childNodes[i])
-            root.appendChild(child)
-          }
-        }
-        return root
-      }
-      return transverse(el)
-    }
 
 
   </script>
