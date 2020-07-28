@@ -8,7 +8,7 @@ class SPath{
     this.size = 0;
     this._color = 'red';
 
-    this.mode = 'join'; // join | stitch | uncomputed
+    this._mode = 'join'; // join | stitch | uncomputed
 
     this.parent = null;
     this.children = [];
@@ -40,7 +40,6 @@ class SPath{
     this.start = sPath.start;
     this.end = sPath.end;
     this.color = sPath.color;
-    this._mode = null;
     this.mode = sPath.mode;
     this.children = sPath.children;
     this.visualizer_group.innerHTML = ''

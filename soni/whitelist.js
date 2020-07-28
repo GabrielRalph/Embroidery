@@ -23,11 +23,11 @@ class SmartParse{
     if (temp_output.getElementsByTagName('parsererror').length > 0){
       new_output = temp_output.getElementsByTagName('parsererror')[0]
     }else{
-      new_output = this.copy(temp_output.firstChild, whitelist)
+      new_output = this._copy(temp_output.firstChild, whitelist)
     }
     return new_output
   }
-  copy(el){
+  _copy(el){
     let transverse = (node) => {
       let root = null;
       if (node.nodeName == '#text'){
