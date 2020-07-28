@@ -30,7 +30,7 @@
         </div>
         <a id = "download_link" download = "myCam.DST">download</a>
       </div>
-      <div class = "input-svg-box">
+      <div id = "input-svg-box">
         <svg id="svg" viewBox="-1500 -250 3000 500">
 
 
@@ -483,7 +483,10 @@
       </div>
       <div id = "tree-visualizer">
         <div id = "Open-Svg">
-          Open Svg
+          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "loadImage(event)"/>
+          <label for = "input-svg">
+            Open Svg
+          </label>
         </div>
         <div id = "Save-Svg">
           Save Svg
@@ -534,11 +537,20 @@
       position: fixed;
       top: 0;
       left: 0;
-      padding: 5px 15px;
       line-height: 20px;
       margin: 0 calc(3*var(--border));
       border: var(--border) solid var(--border-color);
       border-radius: 0 0 20px 20px;
+    }
+
+    #Open-Svg input{
+      display: none;
+    }
+
+    #Open-Svg label{
+      padding: 15px 15px;
+      line-height: 25px;
+      cursor: pointer;
     }
 
     #Save-Svg{
@@ -605,7 +617,7 @@
   }
 
 
-  .input-svg-box{
+  #input-svg-box{
     left: calc(100vw - var(--input-size));
     bottom: calc(100vh - var(--input-size));
     overflow: scroll;
@@ -616,7 +628,7 @@
     -moz-box-shadow:inset var(--border) var(--border-n) 0px var(--border-color);
     box-shadow:inset var(--border) var(--border-n) 0px var(--border-color);
   }
-  .input-svg-box svg{
+  #input-svg-box svg{
     height: 100%;
     float: left;
   }

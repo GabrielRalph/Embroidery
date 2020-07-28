@@ -1,18 +1,23 @@
 class STree{
-  constructor(input_svg, output_svg, node_svg){
+  constructor(output_svg, node_svg){
     this.box = document.getElementById('output-svg-box');
-    this.input_svg = input_svg
     this.output_svg = output_svg
-    this.node_svg = null
+    this.node_svg = node_svg
     this.root = new SPath(this)
     this.root.setVisualizerParent(output_svg)
-    this.root.build(input_svg)
-  }
-
-  VNodeSetup(svg){
-    this.node_svg = svg;
     this.VNodeRender()
   }
+
+  build(input){
+    this.input_svg = input;
+    console.log(input);
+    this.root.build(input);
+    this.VNodeRender();
+  }
+
+  // VNodeSetup(svg){
+  //   this.VNodeRender()
+  // }
 
   VNodeRender(){
     let height = 0;
