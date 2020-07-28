@@ -5,7 +5,7 @@ class JoinFriend{
     this.sPaths = sPaths
 
     this.sPath = this.sPaths.shift()
-    this.sPath_2 = this.sPath_1;
+    this.sPath_2 = this.sPaths[0];
 
     this.svg = this.sPath.sTree.output_svg
     this.closest = null;
@@ -17,6 +17,7 @@ class JoinFriend{
     this.addEventListners()
     this.createCursor()
     this.highlight()
+
   }
 
   addEventListners(){
@@ -45,6 +46,10 @@ class JoinFriend{
     this.toolBox.style.setProperty('visibility', 'hidden')
   }
   createCursor(){
+
+    let avg = this.sPath.start.point
+    this.sPath.focus(avg)
+
     this.cursor = create('ellipse')
     this.cursor.setProps({
       cx: '0',
@@ -58,16 +63,26 @@ class JoinFriend{
   }
 
   highlight(){
-    this.svg.parentNode.style.setProperty('--hide', 0.3)
+    this.svg.parentNode.style.setProperty('--hide', 0.2)
     this.sPath.visualizer_path.setProps({
       style: {
         opacity: '1'
+      }
+    })
+    this.sPath_2.visualizer_path.setProps({
+      style: {
+        opacity: '0.5'
       }
     })
   }
   unhighlight(){
     this.svg.parentNode.style.setProperty('--hide', 1)
     this.sPath.visualizer_path.setProps({
+      style: {
+        opacity: 'var(--hide)'
+      }
+    })
+    this.sPath_2.visualizer_path.setProps({
       style: {
         opacity: 'var(--hide)'
       }
@@ -100,6 +115,7 @@ class JoinFriend{
         }
       }
       this.setCursor(this.closest.node.point)
+      this.sPath.focus(this.closest.node.point)
     }
   }
 
@@ -139,7 +155,6 @@ class JoinFriend{
     let p = this.relMousePoint(event)
     let c = this._closestPoint(p)
     this.closest = c
-    this.sPath.focus(c.node.point)
     this.setCursor(c.node.point)
   }
 
