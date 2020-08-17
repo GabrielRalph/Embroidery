@@ -1,0 +1,5 @@
+AddType image/svg+xml .svg
+AddOutputFilterByType DEFLATE image/svg+xml
+
+################ Expires Control ################
+ExpiresByType image/svg+xml "access 1 month"

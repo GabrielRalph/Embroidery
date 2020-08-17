@@ -483,12 +483,13 @@
       </div>
       <div id = "tree-visualizer">
         <div id = "Open-Svg">
-          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "loadImage(event)"/>
+          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "openSvg(event)"/>
           <label for = "input-svg">
             Open Svg
           </label>
         </div>
-        <div id = "Save-Svg">
+        <div id = "Save-Svg" onclick = "saveSvg(event)">
+          <a></a>
           Save Svg
         </div>
         <svg id = "node_render">
@@ -562,6 +563,7 @@
       margin: 0 calc(27.5*var(--border));
       border: var(--border) solid var(--border-color);
       border-radius: 0 0 20px 20px;
+      cursor: pointer;
     }
 
 

@@ -9,8 +9,11 @@ class STree{
   }
 
   build(input){
+    this.output_svg.innerHTML = ''
+    this.root.set(new SPath(this))
+    this.root.setVisualizerParent(this.output_svg)
+    this.output_svg.setProps({viewBox: input.getAttribute('viewBox')})
     this.input_svg = input;
-    console.log(input);
     this.root.build(input);
     this.VNodeRender();
   }

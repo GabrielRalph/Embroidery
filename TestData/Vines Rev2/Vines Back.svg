@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Generator: Adobe Illustrator 21.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="-1500 -250 3000 500" style="enable-background:new 0 0 3000 500;" xml:space="preserve">
+<svg onclick = "alert('s')" version="1.1" id="svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="-1500 -250 3000 500" xml:space="preserve">
 <!-- <g mode = "join"> -->
 	<g id="design" mode = "join">
 		<g id="vine" mode = "RunningStitch" stroke = "red" max_length = "2.25" min_length = "0.5" max_var = "0.15">
