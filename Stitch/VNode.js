@@ -1,6 +1,7 @@
 class VNode{
   constructor(sPath){
     this.sPath = sPath;
+    this.svg = sPath.sTree.node_svg;
     this._pos = null;
     this._width = 0;
     this.rad = 0.3;
@@ -28,7 +29,7 @@ class VNode{
     }else if (mode == 'join'){
       if (this.sPath.isComputed()){
         this.setColor('#FFFFFF')
-        let join = new JoinFriend(this.sPath.children)
+        let join = new JoinFriend(this.sPath)
       }else{
         this.sPath.computeAll()
       }
@@ -68,17 +69,21 @@ class VNode{
     return ellipse
   }
   get progress(){
-    let path = create('path');
-    let progress = this.sPath.progress;
-    if(this.sPath.progress != null){
-      let p1 = new Vector(0, - this.rad);
-      let p2 = p1.rotate(Math.PI*2*progress);
-      p1 = p1.add(this.pos)
-      p2 = p2.add(this.pos)
-      path.setD(`M${this.pos}L${p1}A${this.rad},${this.rad},0,${progress>0.5?'1':'0'},1,${p2}`)
-      path.setFill(this.colors['computed'])
+    if (this.sPath.progress < 0.97){
+      let path = create('path');
+      let progress = this.sPath.progress;
+      if(this.sPath.progress != null){
+        let p1 = new Vector(0, - this.rad);
+        let p2 = p1.rotate(Math.PI*2*progress);
+        p1 = p1.add(this.pos)
+        p2 = p2.add(this.pos)
+        path.setD(`M${this.pos}L${p1}A${this.rad},${this.rad},0,${progress>0.5?'1':'0'},1,${p2}`)
+        path.setFill(this.colors['computed'])
+      }
+      return path
+    }else{
+      return this.ellipse
     }
-    return path
   }
 
   link(parent){

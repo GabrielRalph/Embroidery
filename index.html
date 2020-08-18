@@ -23,12 +23,33 @@
   <script type="text/javascript" src="./svgPlus.js"></script>
 
   <body>
+    <svg id = "defs">
+      <defs>
+        <marker id="start-point" viewBox="0 0 6 6" refX="3" refY="3" orient="auto" >
+          <ellipse cx = "3" cy = "3" rx = "3" ry = "3" fill = "rgba(0,0,0,0.5)"></ellipse>
+        </marker>
+        <marker id="end-point" viewBox="0 0 6 6" refX="3" refY="3" orient="auto" >
+          <ellipse cx = "3" cy = "3" rx = "1" ry = "1" stroke = "black" fill = "none"></ellipse>
+        </marker>
+        <filter id="glow" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="linearRGB">
+          <feMorphology operator="dilate" radius="1" in="SourceGraphic" result="morphology"/>
+          <feColorMatrix type="hueRotate" values="30" in="morphology" result="colormatrix"/>
+          <feComposite in="SourceGraphic" in2="colormatrix" operator="atop" result="composite1"/>
+        </filter>
+      </defs>
+    </svg>
+
     <div id = "stitch">
       <div id = "tool-box">
-        <div id = "tool-box-data">
+        <div id = "download" background = 'rgb(${i}, 44, 44)'>
+          <h1 style = "color: ${color}">
+            Download ${keys} DST File
+          </h1>
+            <a id = "download_link" download = "myCam.DST" href="${downloadlink}">download</a>
+        </div>
+        <div id = "joints">
 
         </div>
-        <a id = "download_link" download = "myCam.DST">download</a>
       </div>
       <div id = "input-svg-box">
         <svg id="svg" viewBox="-1500 -250 3000 500">
@@ -483,7 +504,7 @@
       </div>
       <div id = "tree-visualizer">
         <div id = "Open-Svg">
-          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "openSvg(event)"/>
+          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "tree.importSvg(event)"/>
           <label for = "input-svg">
             Open Svg
           </label>
@@ -496,43 +517,17 @@
         </svg>
       </div>
       <div id = "output-svg-box">
-        <svg id = "render" viewBox = "-1500 -250 3000 500">
-          <defs>
-            <marker id="start-point" viewBox="0 0 6 6" refX="3" refY="3" orient="auto" >
-              <ellipse cx = "3" cy = "3" rx = "3" ry = "3" fill = "rgba(0,0,0,0.5)"></ellipse>
-            </marker>
-            <marker id="end-point" viewBox="0 0 6 6" refX="3" refY="3" orient="auto" >
-              <ellipse cx = "3" cy = "3" rx = "1" ry = "1" stroke = "black" fill = "none"></ellipse>
-            </marker>
-            <filter id = 'glow' x='-50%' y='-50%' width='200%' height='200%' color-interpolation-filters="sRGB">
-              <!--
-              <feMorphology operator="dilate" radius="1" in="composite" result="morphology2"/>
-              <feComposite in="SourceGraphic" in2="morphology2" operator="xor" result="composite"/>
-              <feColorMatrix type="matrix" values="0.55 0 0 0 0
-              0 0.55 0 0 0
-              0 0 0.55 0 0
-              0 0 0 1 0" in="morphology2" result="colormatrix4"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="colormatrix4" result="blend"/> -->
-
-              <feMorphology operator="dilate" radius="1" in="composite" result="morphology2"/>
-              <feColorMatrix type="matrix" values= "0.55 0 0 0 0
-              0 0.55 0 0 0
-              0 0 0.55 0 0
-              0 0 0 1 0" in="morphology2" result="colormatrix5"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="colormatrix5" result="blend"/>
-              <feMorphology operator="dilate" radius="2" in="SourceGraphic" result="morphology3"/>
-              <feColorMatrix type="matrix" values= "0.4 0 0 0 0
-              0 0.4 0 0 0
-              0 0 0.4 0 0
-              0 0 0 1 0" in="morphology3" result="colormatrix6"/>
-              <feBlend mode="lighten" in="colormatrix6" in2="blend" result="blend1"/>
-            </filter>
-          </defs>
+        <svg id = "render">
         </svg>
       </div>
     </div>
   </body>
   <style>
+  #defs{
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
 
     #Open-Svg{
       position: fixed;
@@ -617,7 +612,12 @@
     -moz-box-shadow:inset 0px 0px 0px var(--border) var(--border-color);
     box-shadow:inset 0px 0px 0px var(--border) var(--border-color);
   }
-
+  #joints{
+    background: rgba(150, 150, 255, 0.95);
+    height: calc(100% - 50px);
+    margin: 5px 0 5px 5px;
+    padding: 20px;
+  }
 
 
   #input-svg-box{
@@ -668,16 +668,49 @@
 
   }
 
-
   #tool-box{
     top: 0;
     left: 0;
     bottom: calc(100vh - var(--input-size));
     right: var(--input-size);
     position: fixed;
-    z-index: 10;
-    background: grey;
-    visibility:  hidden;
+    z-index: 100;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .current-point{
+    background: rgba(255,255,255,0.4);
+    border-radius: 30px;
+    float: left;
+    height: 60px;
+    cursor: pointer;
+  }
+  .current-point h1{
+    margin: 0;
+    text-align: center;
+    line-height: 60px;
+    padding: 0px 15px;
+  }
+  .points{
+    padding: 0 20px;
+    background: rgba(255,255,255,0.2);
+    float: left;
+    overflow-y: scroll;
+    height: 100%;
+    margin-left: 20px;
+    border-radius: 30px;
+  }
+  .points h3{
+    cursor: pointer;
+  }
+  .points h3:hover{
+    color: white;
+  }
+
+
+
+  #download{
+
   }
 
   #tool-box a{
@@ -696,13 +729,22 @@
   }
   .stitch-style{
     fill: none;
-    stroke-width: 3;
+    stroke-width: 1;
     stroke-linecap: round;
     stroke-linejoin: round;
     marker-start: url('#start-point');
     marker-end: url('#end-point');
-    opacity: var(--hide)
+    opacity: var(--hide);
   }
+
+  .highlight_hover:hover ellipse{
+    stroke: red;
+    stroke-width:0.1;
+  }
+  .highlight_hover:hover path{
+    filter: url('#glow')
+  }
+
   </style>
 
   <script type="text/javascript" src="./main.js"></script>

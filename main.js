@@ -17,9 +17,10 @@ let download = document.getElementById('download_link')
 //   alert(err)
 //   console.log(err);
 // }
-
+let toolBox = new ToolBox('tool-box');
 let tree = new STree(render, node)
 let local = window.localStorage.getItem('output')
+
 if (local != null){
   input_svg.innerHTML = local;
   let viewBox = input_svg.children[0].getAttribute('viewBox')
@@ -27,18 +28,7 @@ if (local != null){
   let groups = input_svg.getElementsByTagName('g');
   tree.build(groups[0])
 }
-function openSvg(e){
-  var reader = new FileReader();
-  tree.download_element = download;
-    reader.onload = function(event) {
-        input_svg.innerHTML = event.target.result;
-        let viewBox = input_svg.children[0].getAttribute('viewBox')
-        tree.output_svg.setAttribute('viewBox',viewBox)
-        let groups = input_svg.getElementsByTagName('g');
-        tree.build(groups[0])
-    };
-    reader.readAsText(e.target.files[0]);
-}
+
 
 function saveSvg(e){
 

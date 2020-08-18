@@ -15,7 +15,8 @@ class SPath{
 
     this.visualizer_path = null;
     this.visualizer_group = null;
-    this.visualizer_parent = null
+    this.visualizer_parent = null;
+
   }
 
   // --- --- --- --- --- --- --- --- //
@@ -62,8 +63,13 @@ class SPath{
 
     // Build a subtree from an svg group element
     build(group){
-      let mode = group.getAttribute('mode')
+      if (group.nodeName === 'text'){
+        this.sTree.textSpecs(group)
+        return ''
+      }
 
+      let mode = group.getAttribute('mode')
+      mode = mode == null ? 'join':mode
       //If join node
       if (mode == 'join'){
         this.mode = 'join'
@@ -90,8 +96,6 @@ class SPath{
         this.mode = 'computed'
       }
     }
-
-
 
 
   // --- --- --- --- --- --- --- --- //
@@ -132,6 +136,19 @@ class SPath{
       let here = point.mul(svg_size).div(viewbox.size)
       here = here.sub(box_size.div(2))
       box.scrollTo(here.x, here.y)
+    }
+
+    highlight(bool, color = 'red', width = '0.1'){
+      let node = this.vNode.el;
+      let path = this.visualizer_group;
+
+      if (bool){
+        node.setStroke(color, width);
+        path.setProps({filter: 'url("#glow")'})
+      }else{
+        node.setStroke('none');
+        path.setProps({filter: ''})
+      }
     }
 
     // Remove the visualizer group from its parent
@@ -206,6 +223,25 @@ class SPath{
 
 
   // Setter Getter
+  set onclick(func){
+    let node = this.vNode.el;
+    let path = this.visualizer_group;
+    node.onclick = func;
+    path.onclick = func;
+  }
+  set onmouseover(func){
+    let node = this.vNode.el;
+    let path = this.visualizer_group;
+    node.onmouseover = func;
+    path.onmouseover = func;
+  }
+  set onmouseleave(func){
+    let node = this.vNode.el;
+    let path = this.visualizer_group;
+    node.onmouseleave = func;
+    path.onmouseleave = func;
+  }
+
   set color(val){
     this._color = val;
   }
@@ -362,7 +398,8 @@ class SPath{
   }
 
   //Inserts another sPaths link list
-  insertLoop(loop, location){
+  insertLoop(loop, location, rotation = 1){
+    loop.rotate(rotation)
     loop.push(loop.start.clone())
     loop.push(location.clone())
 
@@ -371,7 +408,7 @@ class SPath{
 
   isLoop(max_length = 40){
     if (this.end != null && this.start != null){
-      return this.end.distance(this.start) < max_length
+      return this.end.point.distance(this.start.point) < max_length
     }
   }
   isComputed(){
