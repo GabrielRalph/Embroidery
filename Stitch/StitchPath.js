@@ -1,5 +1,5 @@
 class StitchPath{
-  constructor(group, sPath){
+  constructor(group, sPath, specs = null){
     this.sPath = sPath;
 
     this.max_length = 3;
@@ -13,8 +13,11 @@ class StitchPath{
 
     this.path = null
     this.path_2 = null;
+    this._pgrs = null;
 
     this.svg_group = group
+
+    this.specs = specs
     this.assignAttributes()
   }
 
@@ -45,6 +48,14 @@ class StitchPath{
     }
   }
 
+  set specs(spec){
+    if(spec != null){
+      for (var key in spec){
+        this[key] = spec[key]
+      }
+    }
+  }
+
   nextStitch(){
     return this['__next' + this.mode]()
   }
@@ -60,6 +71,9 @@ class StitchPath{
     if (this.l_2 && this.end_2){
       progress += this.l_2/this.end_2
       progress /= 2;
+    }
+    if (this._pgrs != null){
+      progress = this._pgrs
     }
     return progress
   }
@@ -224,5 +238,27 @@ class StitchPath{
     this.s = s_i
     this.__addStitch(this.s)
     return true
+  }
+
+  __startcomputed(){
+    let d_string = this.svg_group.children[0].getD();
+    this.d_array = d_string.replace(/M/, '').split('L');
+    this._pgrs_max = this.d_array.length;
+  }
+
+  __nextcomputed(){
+    let i = 50;
+    while(i > 0){
+      let d = this.d_array.shift();
+      if (d){
+        let s = new Vector(d.split(','))
+        this._pgrs = (this._pgrs_max - this.d_array.length)/this._pgrs_max;
+        this.__addStitch(s)
+        return true
+      }else{
+        return false
+      }
+      i--;
+    }
   }
 }

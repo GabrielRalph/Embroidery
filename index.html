@@ -11,16 +11,17 @@
 
   <script type="text/javascript" src="./vector.js"></script>
   <script type="text/javascript" src="./dst.js"></script>
+  <script type="text/javascript" src="./svgPlus.js"></script>
 
-  <script type="text/javascript" src="./Stitch/VNode.js"></script>
   <script type="text/javascript" src="./Stitch/STree.js"></script>
+  <script type="text/javascript" src="./Stitch/SJoin.js"></script>
+  <script type="text/javascript" src="./Stitch/VNode.js"></script>
   <script type="text/javascript" src="./Stitch/JoinFriend.js"></script>
 
   <script type="text/javascript" src="./Stitch/Stitch.js"></script>
   <script type="text/javascript" src="./Stitch/StitchPath.js"></script>
   <script type="text/javascript" src="./Stitch/SPath.js"></script>
 
-  <script type="text/javascript" src="./svgPlus.js"></script>
 
   <body>
     <svg id = "defs">
@@ -36,19 +37,22 @@
           <feColorMatrix type="hueRotate" values="30" in="morphology" result="colormatrix"/>
           <feComposite in="SourceGraphic" in2="colormatrix" operator="atop" result="composite1"/>
         </filter>
+
       </defs>
     </svg>
 
     <div id = "stitch">
       <div id = "tool-box">
-        <div id = "download" background = 'rgb(${i}, 44, 44)'>
-          <h1 style = "color: ${color}">
-            Download ${keys} DST File
+        <div id = "download">
+          <h1>
+            Download DST File
           </h1>
-            <a id = "download_link" download = "myCam.DST" href="${downloadlink}">download</a>
+            <a id = "download_link" download = "myCam.DST" href="${url}">download</a>
         </div>
         <div id = "joints">
 
+        </div>
+        <div id = "join-mode">
         </div>
       </div>
       <div id = "input-svg-box">
@@ -504,7 +508,7 @@
       </div>
       <div id = "tree-visualizer">
         <div id = "Open-Svg">
-          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "tree.importSvg(event)"/>
+          <input id = "input-svg" name = "input-svg" type = "file" accept="image/svg+xml" oninput = "openSvg(event)"/>
           <label for = "input-svg">
             Open Svg
           </label>
@@ -527,6 +531,7 @@
     width: 0;
     height: 0;
     position: absolute;
+    --c1:red;
   }
 
     #Open-Svg{
@@ -612,11 +617,24 @@
     -moz-box-shadow:inset 0px 0px 0px var(--border) var(--border-color);
     box-shadow:inset 0px 0px 0px var(--border) var(--border-color);
   }
-  #joints{
+  #joints, #join-mode{
     background: rgba(150, 150, 255, 0.95);
     height: calc(100% - 50px);
     margin: 5px 0 5px 5px;
-    padding: 20px;
+    padding: 20px 100px;
+  }
+
+  #join-mode div{
+    background: #ffd400;
+    margin: 20px auto;
+    padding: 10px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    text-align: center;
+    display: table;
+  }
+  #join-mode div:last-of-type{
+    background: rgb(150, 235, 50);
   }
 
 
@@ -721,7 +739,6 @@
     border-radius: 50px;
     position: fixed;
     left: 0;
-    visibility: hidden;
   }
   .st0, .st2{
     fill: none;

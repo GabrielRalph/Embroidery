@@ -1,53 +1,84 @@
-class JoinFriend{
-  constructor(join_sPath){
-    // this.toolBox = document.getElementById('tool-box')
-    // this.toolBox.style.setProperty('visibility', 'visible')
-    this.join_sPath = join_sPath
-    this.join_sPath.children.forEach((item) => {
-      if (item.mode != 'computed'){
-        console.error('This node contains uncomputed children');
-      }
-    });
+class LoopInsert{
+  constructor(sJoin){
+    this.sJoin = sJoin;
+    this.sTree = sJoin.sTree;
+    this.toolBox = this.sTree.toolBox;
+    this.toolBox.hide();
+    this.max_length = 30;
 
-    this.max_length = 40;
+    //Add sJoin to the workSet
+    this.workSet = new WorkSet(this.sTree);
+    this.workSet.appendNode(sJoin)
 
-    this.temp = null;
-    this.path_a = null;
-    this.path_b = null;
-
-    this.ll_a = null;
-    this.ll_b = null;
-
-    this.output_svg = this.join_sPath.sTree.output_svg;
-    this.node_svg = this.join_sPath.sTree.node_svg;
-
-    this.node_focus_pannel = null;
-    this.path_focus_pannel = null;
-    this.createFocusPannel();
-
-    this.addEventListeners()
+    this.sJoin.onclick = () => {
+      console.log('x');
+      this.__end()
+    }
+    this.select_first_sPath();
   }
 
-  setPaths(path_a, path_b){
-    this.path_a = path_a;
-    this.path_b = path_b;
+  select_first_sPath(){
+    //Turn hover graphics on
+    this.sJoin.hover(true)
+    this.sJoin._hover(false)
 
-    path_a.visualizer_path.setStroke('red', '4')
-    path_b.visualizer_path.setStroke('red', '4')
-    this.focus(false);
-    this.focus(true, path_a);
-    this.focus(true, path_b);
+    this.sJoin.children.forEach((sPath)=>{
+      sPath.onclick = () => {
+        this.select_second_sPath(sPath)
+      }
+    });
+  }
 
-    let insert_conex = []
+  set ondone(callback){
+    this._ondone = callback
+  }
+  get ondone(){
+    return this._ondone
+  }
 
-    if (this.path_b.isLoop(this.max_length)){
-      toolBox.show('joints');
+  select_second_sPath(sPath_a){
+    sPath_a.hover(false)
+    sPath_a.highlight(true)
+
+    this.sJoin.children.forEach((sPath)=>{
+      if(sPath == sPath_a){
+        sPath_a.onclick = () => {
+          this.select_first_sPath()
+        }
+      }else{
+        sPath.onclick = () => {
+          this.compute_possible_links(sPath_a, sPath)
+        }
+      }
+    });
+  }
+
+  compute_possible_links(path_a, path_b){
+
+
+    if ( path_b.isLoop(this.max_length) ){
+      this.path_a = path_a;
+      this.path_b = path_b;
+
+      this.workSet.removeNode('all');
+      this.sJoin.hover(false);
+      this.sJoin.highlight(false);
+      path_a.highlight(true);
+      this.workSet.appendNode(path_a)
+      this.workSet.appendNode(path_b)
+
+      this.toolBox.show('joints');
+
+      path_a.setStroke('red', '4')
+      path_b.setStroke('red', '4')
 
       //Check paths for all posible joins
       let cur_a = this.path_a.start;
       let cur_b = this.path_b.start;
       let a_i = 0;
       let b_i = 0;
+
+      let insert_conex = [];
 
       let next = () => {
         if (cur_a != path_a.end){
@@ -60,26 +91,18 @@ class JoinFriend{
             let dist = cur_a.point.distance(cur_b.point);
 
             if (dist < this.max_length){
-              let joint = this.path_focus_pannel.createChild('path', {
+
+              let joint = this.workSet.el_paths.createChild('path', {
                 d: `M${cur_a.point}L${cur_b.point}`,
                 stroke: `rgb(0, 255, 0)`,
                 'stroke-width': '1',
                 fill: 'none'
               })
-              let test = false;
-              for (var i = 1; i < joint.getTotalLength(); i+=2){
-                let p = joint.getPointAtLength(i);
-                let pina = path_a.visualizer_path.isPointInStroke(p)
-                let pinb = path_b.visualizer_path.isPointInStroke(p)
-                test = pina && pinb
-                if (!test){
-                  break;
-                }
-              }
-              if(test){
+
+              if(this.__isOverlaping(joint)){
                 insert_conex.push({a: cur_a, b: cur_b, a_i:a_i, b_i:b_i});
               }else{
-                this.path_focus_pannel.removeChild(joint)
+                this.workSet.el_paths.removeChild(joint)
               }
             }
           }
@@ -87,38 +110,34 @@ class JoinFriend{
           b_i = 0;
           window.requestAnimationFrame(next)
         }else{
-          path_a.visualizer_path.setStroke('red', '1')
-          path_b.visualizer_path.setStroke('red', '1')
+          path_a.setStroke('red', '1')
+          path_b.setStroke('red', '1')
           this.chooseP1(insert_conex)
         }
       }
       window.requestAnimationFrame(next)
+    }else{
+      alert('The second path is not a loop')
     }
   }
 
   chooseP1(data){
     if(data.length == 0){
-      toolBox.hide();
-      alert('no solution');
-      this.destroyFocusPannel();
-      return
+      alert('No solutions found')
+      this.__end()
     }
 
     //Create Toolbox
-    toolBox.list = document.createElement('div');
-    toolBox.list.setProps({class: 'points'});
-    toolBox.curbox = document.createElement('div');
-    toolBox.curbox.setProps({class: 'current-point'});
-    toolBox.cur = document.createElement('h1');
-    toolBox.curbox.appendChild(toolBox.cur);
-    toolBox.tool.appendChild(toolBox.curbox)
-    toolBox.tool.appendChild(toolBox.list)
+    this.toolBox.list = document.createElement('div');
+    this.toolBox.list.setProps({class: 'points'});
+    this.toolBox.curbox = document.createElement('div');
+    this.toolBox.curbox.setProps({class: 'current-point'});
+    this.toolBox.cur = document.createElement('h1');
+    this.toolBox.curbox.appendChild(this.toolBox.cur);
+    this.toolBox.tool.appendChild(this.toolBox.curbox)
+    this.toolBox.tool.appendChild(this.toolBox.list)
 
-    this.pointer = this.path_focus_pannel.createChild('ellipse',{
-      fill: 'blue',
-      rx: '3',
-      ry: '3'
-    })
+
 
     let lai = -20;
     let linkf = null;
@@ -126,9 +145,9 @@ class JoinFriend{
       if (link.a_i != lai){
         let h3 = document.createElement('h3');
         h3.innerHTML = link.a_i;
-        toolBox.list.appendChild(h3)
+        this.toolBox.list.appendChild(h3)
 
-        toolBox.cur.onclick = () => {
+        this.toolBox.cur.onclick = () => {
           if (linkf != null){
             let aif = linkf.a_i
             let new_data = [];
@@ -140,14 +159,10 @@ class JoinFriend{
             this.chooseP2(new_data)
           }
         }
-
         h3.onclick = () => {
-          toolBox.cur.innerHTML = link.a_i;
+          this.toolBox.cur.innerHTML = link.a_i;
+          this.workSet.point(link.a)
           linkf = link;
-          this.pointer.setProps({
-            cx: `${link.a.point.x}`,
-            cy: `${link.a.point.y}`
-          })
         }
         lai = link.a_i
       }
@@ -157,288 +172,64 @@ class JoinFriend{
   chooseP2(data){
     let lbi = -20;
     let linkf = null;
-    toolBox.list.innerHTML = '';
-    toolBox.cur.innerHTML = '';
+    this.toolBox.list.innerHTML = '';
+    this.toolBox.cur.innerHTML = '';
     data.forEach((link) => {
       if (link.b_i != lbi){
         let h3 = document.createElement('h3');
         h3.innerHTML = link.b_i;
-        toolBox.list.appendChild(h3)
+        this.toolBox.list.appendChild(h3)
 
-        toolBox.cur.onclick = () => {
+        this.toolBox.cur.onclick = () => {
           if (linkf != null){
-            toolBox.hide();
-            this.destroyFocusPannel();
+            this.workSet.remove()
+            this.sJoin.hover(false)
+            this.sJoin.highlight(false)
+            this.sJoin.removeEventHandlers();
+            this.toolBox.hide();
+
             this.path_a.insertLoop(this.path_b, linkf.a, linkf.b_i)
-            this.join_sPath.removeChild(this.path_b);
+            // console.log(this.path_b);
+            this.sJoin.removeChild(this.path_b);
+            this.ondone();
           }
         }
 
         h3.onclick = () => {
-          toolBox.cur.innerHTML = link.b_i;
+          this.toolBox.cur.innerHTML = link.b_i;
           linkf = link;
-          this.pointer.setProps({
-            cx: `${link.b.point.x}`,
-            cy: `${link.b.point.y}`
-          })
+          this.workSet.point(link.b)
         }
         lbi = link.b_i
       }
     });
   }
 
-  addEventListeners(sPath = null){
-    if (sPath == null){
-      this.join_sPath.children.forEach((sPath_i) => {
-        this.addEventListeners(sPath_i)
-      });
-    }else{
-      sPath.onmouseover = () => {
-        sPath.highlight(true);
-      }
+  __end(){
+    this.toolBox.hide()
+    this.sJoin.hover(false)
+    this.sJoin.highlight(false)
+    this.sJoin.removeEventHandlers();
+    this.workSet.remove()
+    this.ondone()
+  }
 
-      sPath.onmouseleave = () => {
-        sPath.highlight(false);
-      }
+  __isOverlaping(joint){
+    for (var i = 1; i < joint.getTotalLength(); i+=2){
+      let p = joint.getPointAtLength(i);
+      let pina = this.path_a.visualizer_path.isPointInStroke(p)
+      let pinb = this.path_b.visualizer_path.isPointInStroke(p)
 
-      sPath.onclick = () => {
-        this.removeEventListeners(sPath);
-        sPath.highlight(true, 'rgb(255,100,100)')
-        if (this.temp != null){
-          this.setPaths(this.temp, sPath);
-        }else{
-          this.temp = sPath;
-          sPath.onclick = () => {
-            this.temp = null;
-            this.addEventListeners(sPath)
-          }
-        }
+      if (!(pina && pinb)){
+        return false
       }
     }
-  }
-
-  removeEventListeners(sPath = null){
-    if (sPath == null){
-      this.join_sPath.children.forEach((sPath_i) => {
-        this.removeEventListeners(sPath_i)
-      });
-    }else{
-      let node = sPath.vNode.el;
-      let path = sPath.visualizer_group;
-
-      node.onmousemove = null;
-      path.onmousemove = null;
-      node.onmouseleave = null;
-      path.onmouseleave = null;
-      node.onclick = null;
-      path.onclick = null;
-    }
-  }
-
-  stopEventListners(){
-    this.svg.onclick = null
-    this.svg.onmousemove = null
-  }
-  clearCursor(){
-    this.svg.removeChild(this.cursors)
-    this.toolBox.style.setProperty('visibility', 'hidden')
-  }
-  createCursor(){
-
-    let avg = this.sPath.start.point
-    this.sPath.focus(avg)
-
-    this.cursor = create('ellipse')
-    this.cursor.setProps({
-      cx: '0',
-      cy: '0',
-      rx: '5',
-      ry: '5',
-      fill: 'none',
-      stroke: 'green'
-    })
-    this.cursors.appendChild(this.cursor)
-  }
-
-  createFocusPannel(){
-    let vb = this.node_svg.getViewBox('outline_path')
-    this.node_focus_pannel = this.node_svg.createChild('g')
-    this.node_focus_pannel.createChild('path', {
-      d: vb,
-      fill: 'rgba(255,255,255,0.5)',
-    })
-
-    vb = this.output_svg.getViewBox('outline_path')
-    this.path_focus_pannel = this.output_svg.createChild('g')
-    this.path_focus_pannel.createChild('path', {
-      d: vb,
-      fill: 'rgba(255,255,255,0.5)',
-    })
-
-    this.focus(true)
-  }
-  destroyFocusPannel(){
-    this.removeEventListeners();
-    this.focus(false)
-
-    this.node_svg.removeChild(this.node_focus_pannel)
-    this.output_svg.removeChild(this.path_focus_pannel)
-    this.node_focus_pannel = null;
-    this.path_focus_pannel = null;
-  }
-
-  focus(bool, sPath = null){
-    if (sPath == null){
-      this.join_sPath.children.forEach((sPath_i) => {
-        this.focus(bool, sPath_i)
-      });
-    }else{
-      let node = sPath.vNode.el;
-      let path_group = sPath.visualizer_group;
-      let group_parent = sPath.visualizer_parent;
-
-      if(bool){
-        this.node_svg.removeChild(node);
-        this.node_focus_pannel.appendChild(node);
-
-        group_parent.removeChild(path_group);
-        this.path_focus_pannel.appendChild(path_group);
-      }else{
-        sPath.highlight(false)
-        if (this.node_focus_pannel.contains(node)){
-          this.node_focus_pannel.removeChild(node);
-          this.node_svg.appendChild(node);
-
-          this.path_focus_pannel.removeChild(path_group);
-          group_parent.appendChild(path_group);
-        }else{
-          console.log('s');
-        }
-      }
-    }
-  }
-
-  wheel(e){
-    if(this.closest == null){
-      console.log(this.closest);
-        this.closest = {
-          node: this.sPath.start,
-          i: 0,
-        }
-    }else{
-      if (e.deltaY > 0){
-        if (this.closest.node == this.sPath.end){
-          this.closest.node = this.sPath.start;
-          this.closest.i = 0;
-        }else{
-          this.closest.node = this.closest.node.next;
-          this.closest.i ++;
-        }
-      }else{
-        if (this.closest.node == this.sPath.start){
-          this.closest.node = this.sPath.start;
-          this.closest.i = this.sPath.size - 1;
-        }else{
-          this.closest.node = this.closest.node.last;
-          this.closest.i --;
-        }
-      }
-      this.setCursor(this.closest.node.point)
-      this.sPath.focus(this.closest.node.point)
-    }
-  }
-
-  click(){
-    this.unhighlight()
-    if (this.merger){
-      this.merger = false;
-
-      this.insert_location = this.closest.node
-
-      this.sPath_2 = this.sPath;
-      this.sPath = this.sPaths.shift();
-
-      this.cursor.setStroke('#8888FF')
-      this.cursor.setFill('#0000FF')
-      this.createCursor()
-      this.highlight()
-    }else{
-      this.sPath.rotate(this.closest.i)
-      this.sPath_2.insertLoop(this.sPath, this.insert_location)
-      this.sPath_2.parent.removeChild(this.sPath)
-
-      if (this.sPaths.length < 1){
-        this.stopEventListners()
-        this.clearCursor()
-        this.sPath_2.parent.set(this.sPath_2)
-        this.sPath_2.parent.vNode.update()
-      }else{
-        this.sPath = this.sPath_2;
-        this.merger = true;
-        this.highlight()
-      }
-    }
-  }
-
-  mousemove(event){
-    let p = this.relMousePoint(event)
-    let c = this._closestPoint(p)
-    this.closest = c
-    this.setCursor(c.node.point)
-  }
-
-  relMousePoint(event){
-    let m = new Vector(event)
-    let vb = this.svg.getAttribute('viewBox').split(' ')
-    let vs = new Vector(vb[2], vb[3])
-    vb = new Vector(vb[0], vb[1])
-    let size = new Vector(this.svg.clientWidth, this.svg.clientHeight);
-    let fact = vs.div(size)
-    var t = this.svg.getBoundingClientRect().top;
-    var l = this.svg.getBoundingClientRect().left;
-    let offset = new Vector(l, t)
-
-    let point = m.sub(offset).mul(fact).add(vb)
-    return point
-  }
-
-  setCursor(p){
-    if (this.closest != null){
-      let disp = `path-offset: ${this.closest.i}`
-      this.toolBox.children[0].innerHTML = disp;
-    }
-    this.cursor.setProps({
-      cx: `${p.x}`,
-      cy: `${p.y}`
-    })
-
-  }
-
-  _closestPoint(p){
-    let i = 0;
-    let cur = this.sPath.start
-    let d = cur.point.distance(p)
-    let soln = {
-      node: cur,
-      i: 0,
-      d: d
-    }
-    while (cur != this.sPath.end) {
-      cur = cur.next;
-      i++;
-      d = cur.point.distance(p);
-      if (d < soln.d){
-        soln = {
-          node: cur,
-          i: i,
-          d: d
-        }
-      }
-    }
-    return soln
+    return true
   }
 }
+class MovePath{
 
+}
 class ToolBox{
   constructor(el){
     this.el = parseElement(el);
@@ -482,31 +273,5 @@ class ToolBox{
   hide(){
     this.el.innerHTML = ''
     this.el.setStyles({'pointer-events': 'none'})
-  }
-}
-
-class SJoin{
-  constructor(sTree){
-    this.sTree = sTree;
-    this.children = [];
-    this.parent = null;
-
-    this.el = create('g');
-  }
-
-  appendChild(child){
-    this.children.push(child);
-    this.el.appendChild(child.el);
-    child.parent = this;
-  }
-  removeChild(child){
-    let newChildren = []
-    this.children.forEach((child_i, i) => {
-      if (child_i != child){
-        newChildren.push(child_i)
-      }
-    });
-    this.el.removeChild(child.el)
-    this.children = newChildren;
   }
 }

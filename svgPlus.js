@@ -4,6 +4,7 @@ let create = (name, props = null) => {
   }else{
     let el = document.createElementNS("http://www.w3.org/2000/svg", name);
     el.setProps(props);
+    return el
   }
 }
 let parseElement = (elem) => {
@@ -15,7 +16,7 @@ let parseElement = (elem) => {
   }else if ((`${elem.constructor}`).indexOf('Element') != -1){
     return elem
   }else{
-    return null
+    throw 'invalid element'
   }
 }
 
@@ -150,4 +151,11 @@ SVGPathElement.prototype.addSmoothPoint = function (point){
 SVGPathElement.prototype.clear = function (){
   this.smoothSum = 0;
   this.smoothBuffer = []
+}
+
+SVGUseElement.prototype.setParams = function (params){
+  this.innerHTML = ''
+  for (var name in params){
+    this.innerHTML += `<param name = '${name}' value = '${params[name]}' />`
+  }
 }

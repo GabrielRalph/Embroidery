@@ -322,7 +322,7 @@ class DSTBuffer{
     let n = Math.floor(move_dist/inc_dist)
 
     let float_points = [point1]
-    let jump_path = new SPath()
+    let jump_path = new Path()
     jump_path.push(point1)
 
     for (var i = 0; i < n; i++){
@@ -335,7 +335,7 @@ class DSTBuffer{
   }
 
   encodeSPath(sPath){
-    // sPath.reflect('h')
+    sPath.reflect('h')
     sPath.tieOff()
 
     let lastPoint = sPath.start.point
@@ -371,19 +371,16 @@ class DSTBuffer{
       this.maxx = lastPoint.point.x>this.maxx?lastPoint.point.x:this.maxx
       this.maxy = lastPoint.point.y>this.maxy?lastPoint.point.y:this.maxy
     }
-    this.addEnd()
+    this.start_point = lastPoint.point;
   }
 }
 class DSTExporter{
   constructor(element = null){
-    this.download_element = element;
-    this.download_element.style.setProperty('visibility', 'hidden')
     this.dstBuffer = new DSTBuffer()
   }
 
-  exportSPath(sPath){
-    this.dstBuffer.encodeSPath(sPath)
-
+  downloadURL(){
+    this.dstBuffer.addEnd();
     let header = DSTHeader(this.dstBuffer)
     let dst = header.concat(this.dstBuffer.buffer)
 
@@ -399,9 +396,16 @@ class DSTExporter{
 
     let dst_blob = new Blob([array], {type: "application/octet-stream"})
     var url = window.URL.createObjectURL(dst_blob);
+    return url
+  }
 
-    console.log(this.download_element);
-    this.download_element.href = url;
-    this.download_element.style.setProperty('visibility', 'visible')
+  addSNode(sNode){
+    if (sNode instanceof SPath){
+      this.dstBuffer.encodeSPath(sNode)
+    }else if(sNode instanceof SJoin){
+      sNode.children.forEach((child) => {
+        this.addSNode(child)
+      });
+    }
   }
 }

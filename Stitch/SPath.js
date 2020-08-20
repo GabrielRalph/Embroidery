@@ -1,101 +1,30 @@
-class SPath{
-  constructor(sTree){
-    this.sTree = sTree;
-    this.vNode = new VNode(this)
+class SPath extends SNode{
+  constructor(sTree, group, specs = null){
+    super(sTree)
+
+    this.vNode.color = 'uncomputed'
 
     this._end = null;
     this._start = null;
     this.size = 0;
     this._color = 'red';
 
-    this.mode = 'join'; // join | stitch | uncomputed
-
-    this.parent = null;
-    this.children = [];
-
     this.visualizer_path = null;
-    this.visualizer_group = null;
-    this.visualizer_parent = null;
 
+    this.mode = 'uncomputed'
+
+    this.stitchGenerator = new StitchPath(group, this, specs)
+    this.onclick = () => { this.compute()}
+  }
+
+  setStroke(color, width = '1'){
+    this.visualizer_path.setStroke(color, width)
   }
 
   // --- --- --- --- --- --- --- --- //
   // --- - Tree MGMT Functions - --- //
   // --- --- --- --- --- --- --- --- //
 
-    // Append a child sPath
-    appendChild(child){
-      this.children.push(child)
-      child.parent = this;
-      child.setVisualizerParent(this.visualizer_group)
-    }
-
-    // Remove a child sPath
-    removeChild(child_to_remove){
-      let newChildren = [];
-      this.visualizer_group.removeChild(child_to_remove.visualizer_group)
-
-      for (var i = 0; i < this.children.length; i++){
-        let child = this.children[i]
-        if (child != child_to_remove){
-          newChildren.push(child)
-        }
-      }
-      this.children = newChildren
-      if (this.children.length == 1){
-        this.set(this.children[0])
-      }
-      this.sTree.VNodeRender();
-    }
-
-    // Set as another sPath
-    set(sPath){
-      this.start = sPath.start;
-      this.end = sPath.end;
-      this.color = sPath.color;
-      this.mode = sPath.mode;
-      this.children = sPath.children;
-      this.visualizer_group.innerHTML = ''
-      if (sPath.visualizer_group){
-        this.visualizer_group.appendChild(sPath.visualizer_path)
-      }
-    }
-
-    // Build a subtree from an svg group element
-    build(group){
-      if (group.nodeName === 'text'){
-        this.sTree.textSpecs(group)
-        return ''
-      }
-
-      let mode = group.getAttribute('mode')
-      mode = mode == null ? 'join':mode
-      //If join node
-      if (mode == 'join'){
-        this.mode = 'join'
-        let children = group.children
-        for (var i = 0; i < children.length; i++){
-          let child = children[i];
-          let sChild = new SPath(this.sTree)
-          this.appendChild(sChild)
-          sChild.build(child)
-        }
-
-        //If leaf path node
-      }else if (mode == 'RunningStitch'||mode == 'SatinColumn'){
-        this.mode = 'uncomputed'
-        this.stitchGenerator = new StitchPath(group, this)
-      }else if(mode == 'computed'){
-        let d = group.children[0].getD();
-        d = d.replace(' ', '').replace('M', '').split('L');
-        for (var i = 0; i < d.length; i++){
-          let ps = d[i].split(',')
-          let p = new Vector(ps)
-          this.push(new Stitch(p))
-        }
-        this.mode = 'computed'
-      }
-    }
 
 
   // --- --- --- --- --- --- --- --- //
@@ -138,52 +67,19 @@ class SPath{
       box.scrollTo(here.x, here.y)
     }
 
-    highlight(bool, color = 'red', width = '0.1'){
-      let node = this.vNode.el;
-      let path = this.visualizer_group;
-
-      if (bool){
-        node.setStroke(color, width);
-        path.setProps({filter: 'url("#glow")'})
-      }else{
-        node.setStroke('none');
-        path.setProps({filter: ''})
-      }
-    }
-
-    // Remove the visualizer group from its parent
-    removeVisualizer(){
-      this.visualizer_parent.removeChild(this.visualizer_group)
-      this.visualizer_parent = null
-      this.visualizer_path = null;
-    }
-
-    // Set a visualizer parent and append a group element
-    setVisualizerParent(svg){
-      this.visualizer_group = create('g')
-      this.visualizer_parent = svg
-      this.visualizer_parent.appendChild(this.visualizer_group)
-    }
-
     // Creates an svg path and sets its class to .stitch-style
     createPath(){
-      this.visualizer_path = create('path')
-      this.visualizer_path.SPath = this
-      this.visualizer_path.setAttribute('class','stitch-style')
-      this.visualizer_group.appendChild(this.visualizer_path)
+      this.visualizer_path = this.el.createChild('path', {class: 'stitch-style'})
     }
 
     render(){
-      if (this.visualizer_group != null) {
-        if (this.visualizer_path == null){
-          this.createPath()
-        }
-        this.visualizer_path.setAttribute('d',`${this}`)
-        this.visualizer_path.setAttribute('stroke',`${this.color}`)
-      }else {
-        return false
+      if (this.visualizer_path == null){
+        this.createPath()
       }
+      this.visualizer_path.setAttribute('d',`${this}`)
+      this.visualizer_path.setAttribute('stroke',`${this.color}`)
     }
+
     animate(){
       let cur = this.start.next
       let nextFrame = () => {
@@ -207,6 +103,8 @@ class SPath{
       this.mode = 'computing'
       this.stitchGenerator.computeOnAnimationFrame(() => {
         this.mode = 'computed'
+        this.vNode.color = 'computed'
+        this.vNode.__update()
         if (callback){
           callback()
         }
@@ -221,26 +119,6 @@ class SPath{
     }
   }
 
-
-  // Setter Getter
-  set onclick(func){
-    let node = this.vNode.el;
-    let path = this.visualizer_group;
-    node.onclick = func;
-    path.onclick = func;
-  }
-  set onmouseover(func){
-    let node = this.vNode.el;
-    let path = this.visualizer_group;
-    node.onmouseover = func;
-    path.onmouseover = func;
-  }
-  set onmouseleave(func){
-    let node = this.vNode.el;
-    let path = this.visualizer_group;
-    node.onmouseleave = func;
-    path.onmouseleave = func;
-  }
 
   set color(val){
     this._color = val;
@@ -262,11 +140,11 @@ class SPath{
   }
   set mode(mode){
     this._mode = mode;
-    if (this.visualizer_group){
-      this.visualizer_group.setAttribute('mode',mode)
+    if (this.el){
+      this.el.setAttribute('mode',mode)
     }
     if (this.vNode){
-      this.vNode.update()
+      this.vNode.__update()
     }
   }
   get mode(){
@@ -274,7 +152,7 @@ class SPath{
   }
   set progress(progress){
     this._progress = progress;
-    this.vNode.update();
+    this.vNode.__update();
   }
   get progress(){
     if (this._progress){
@@ -495,6 +373,161 @@ class SPath{
     }
   }
 
+  toString(){
+    return `${this.start}`
+  }
+}
+
+class Path{
+  constructor(){
+    this._end = null;
+    this._start = null;
+  }
+
+  set end(val){
+    this._end = val;
+  }
+  get end(){
+    return this._end;
+  }
+  set start(val){
+    this._start = val;
+  }
+  get start(){
+    return this._start;
+  }
+
+  // Pushes to the link list
+  push(stitch){
+    if (stitch instanceof Vector){
+      stitch = new Stitch(stitch)
+    }
+
+    if (stitch instanceof Stitch){
+      this.size ++;
+
+      if (this.end == null){
+        this.start = stitch;
+        this.end = stitch;
+      }else{
+        this.end.next = stitch
+        stitch.last = this.end
+        this.end = stitch;
+      }
+    }else if(stitch instanceof SPath){
+      this.size += stitch.size
+
+      if (this.end == null){
+        this.start = stitch.start;
+        this.end = stitch.end;
+      }else{
+        this.end.next = stitch.start
+        stitch.start.last = this.end
+        this.end = stitch.end;
+      }
+    }
+  }
+  queue(stitch){
+    if (stitch instanceof Vector){
+      stitch = new Stitch(stitch)
+    }
+
+    if (stitch instanceof Stitch){
+      this.size ++;
+
+      if (this.start == null){
+        this.start = stitch;
+        this.end = stitch;
+      }else{
+        this.start.last = stitch
+        stitch.next = this.start
+        this.start = stitch;
+      }
+    }else if(stitch instanceof SPath){
+      this.size += stitch.size;
+
+      if (this.start == null){
+        this.start = stitch.start;
+        this.end = stitch.end;
+      }else{
+        this.start.last = stitch.end
+        stitch.end.next = this.start
+        this.start = stitch.start;
+      }
+    }
+  }
+  putAfter(stitch, location){
+    if (stitch instanceof Vector){
+      stitch = new Stitch(stitch)
+    }
+    if (stitch instanceof Stitch){
+      this.size ++;
+
+      stitch.next = location.next
+      stitch.last = location
+      location.next = stitch
+    }else if (stitch instanceof SPath){
+      this.size += stitch.size;
+      let next_location = location.next;
+      stitch.end.next = next_location
+      next_location.last = stitch.end
+
+      stitch.start.last = location
+      location.next = stitch.start
+    }
+
+  }
+  // Link list smart functions
+  rotate(x = 1){
+    let dir = x < 0;
+    x = Math.abs(x);
+    for (var i = 0; i < x; i++){
+      if (dir){
+        //New end will be the ends last node
+        let new_end = this.end.last;
+        new_end.next = null
+
+        let new_start = this.end;
+        new_start.next = this.start;
+        new_start.last = null;
+        this.start.last = new_start
+        this.start = new_start;
+
+        this.end = new_end;
+      }else{
+        //New end will be the ends last node
+        let new_start = this.start.next;
+        new_start.last = null
+
+        let new_end = this.start;
+        new_end.last = this.end;
+        new_end.next = null;
+        this.end.next = new_end
+        this.end = new_end;
+
+        this.start = new_start;
+      }
+    }
+
+  }
+  tieOff(length = 3, repeats = 1){
+    let cur_s = this.start
+    let cur_e = this.end
+    for (var r = 0; r < repeats; r++){
+      for (var i = 0; i < length; i++){
+        cur_s = cur_s.next
+        cur_e = cur_e.last
+        this.queue(cur_s.clone())
+        this.push(cur_e.clone())
+      }
+      for (var i = 0; i < length; i++){
+        cur_s = cur_s.last
+        cur_e = cur_e.next
+        this.queue(cur_s.clone())
+        this.push(cur_e.clone())
+      }
+    }
+  }
   toString(){
     return `${this.start}`
   }

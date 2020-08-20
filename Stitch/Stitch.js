@@ -19,6 +19,21 @@ class Stitch{
      this._next = val;
    }
 
+   get x(){
+     return this.point.x
+   }
+
+   set x(val){
+     this.point.x = val;
+   }
+   get y(){
+     return this.point.y
+   }
+
+   set y(val){
+     this.point.y = val;
+   }
+
    set last(val){
      this._last = val;
    }
