@@ -265,6 +265,7 @@ class SJoin extends SNode{
       let b_i = 0;
 
       let links = [];
+      let clr = 0;
       let next = () => {
         if (cur_a != path_a.end){
           cur_a = cur_a.next;
@@ -276,10 +277,11 @@ class SJoin extends SNode{
             let dist = cur_a.point.distance(cur_b.point);
 
             if (dist < this.max_length){
+              clr += 10;
 
               let joint = link_finder_group.createChild('path', {
                 d: `M${cur_a.point}L${cur_b.point}`,
-                stroke: `rgb(0, 255, 0)`,
+                stroke: `hsl(${clr%360}deg, 100%, 50%)`,
                 'stroke-width': '1',
                 fill: 'none'
               })

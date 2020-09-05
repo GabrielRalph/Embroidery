@@ -95,6 +95,8 @@ class StitchPath{
               }else{
                 this.sPath.loopBack()
               }
+            }else{
+              this.sPath.push(this.sPath.start.clone())
             }
 
             callback()
