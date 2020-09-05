@@ -188,7 +188,7 @@ class STree{
     if (typeof size === 'number' && size){
       this._size = size;
       if (this.el != null){
-        this.el.setProps({style:{width: `${this._size}vw`}})
+        this.el.setProps({style:{width: `${this._size}vmax`}})
       }
     }else{
       this.size = 100;
@@ -203,10 +203,17 @@ class STree{
     if (this.el == null){
       return
     }
+    let svg_size = new Vector(this.el.clientWidth, this.el.clientHeight);
+    let box = this.el.parentNode;
+    let box_size = new Vector(box.clientWidth, box.clientHeight);
+    let scrollloc = svg_size.sub(box_size).div(2)
+    box.scrollTo(scrollloc.x, scrollloc.y)
+
     this.el.onwheel = (e) => {
       e.preventDefault()
       this.size += e.deltaY*0.01;
     }
+
     let clicks = 0;
     this.el.onclick = () => {
       clicks ++;
