@@ -1,5 +1,8 @@
 let sTree = new STree('node-svg');
-sTree.el = document.getElementById('EMB')
+sTree.el = document.getElementById('EMB');
+window.onerror = (err) => {
+  alert(err)
+}
 class CtxMenu{
   constructor(parent = document.body){
     this.el = document.createElement('DIV');
