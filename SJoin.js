@@ -36,6 +36,10 @@ class SJoin extends SNode{
     return mode
   }
 
+  set mode(val){
+    this.el.mode = val
+  }
+
   flatten(){
     let groups = this.el.getElementsByTagName('g');
     let sPaths = this.sPaths;
@@ -199,34 +203,44 @@ class SJoin extends SNode{
     window.requestAnimationFrame(next)
   }
 
-  join(i = 1){
-    let children = this.children;
-    let path_a = children[0].sNode;
-    if ( i >= children.length){
+  join(sPaths = this.sPaths){
+    if (sPaths.length > 1){
+      let path_a = sPaths.shift();
+      let path_b = sPaths.shift();
+      this.__findLinks(path_a.sNode, path_b.sNode, (links) => {
+
+        //No link found
+        if (links.length == 0){
+          sPaths.unshift(path_a);
+          if (sPaths.length > 1){
+            this.join(sPaths);
+          }else{
+            alert('No Solutions');
+
+          }
+
+          //Links Found
+        }else{
+          //Insert loop
+          let linkf = links[links.length -1];
+          path_a.sNode.insertLoop(path_b.sNode, linkf.a, linkf.b_i)
+
+          if ( this.sPaths.length > 1){
+            this.join(this.sPaths)
+          }else{
+            path_a.sNode.animate();
+            this.___updateAllSJoinModes()
+          }
+        }
+
+      })
+    }else{
       this.tol += 1;
       throw `No solution`
     }
-    let path_b = children[i].sNode;
-
-
-    this.__findLinks(path_a, path_b, (links) => {
-      if (links.length == 0){
-        this.join(i + 1);
-      }else{
-        let linkf = links[links.length -1];
-        console.log(linkf);
-        path_a.insertLoop(path_b, linkf.a, linkf.b_i)
-        if ( children.length > 1){
-          this.join()
-        }else{
-          path_a.animate();
-          this.___updateAllSJoinModes()
-        }
-      }
-    })
 
   }
-  __isOverlaping(path_a, path_b, joint){
+  ___isOverlaping(path_a, path_b, joint){
     for (var i = 1; i < joint.getTotalLength(); i+=2){
       let p = joint.getPointAtLength(i);
       let pina = path_a.visualizer_path.isPointInStroke(p)
@@ -241,10 +255,8 @@ class SJoin extends SNode{
   __findLinks(path_a, path_b, callback){
 
       let link_finder_group = this.sTree.el.createChild('g')
-
-
-      path_a.setStroke('red', `${this.tol}`)
-      path_b.setStroke('red', `${this.tol}`)
+      path_a.el.setStroke('red',`${this.tol}`);
+      path_b.el.setStroke('red',`${this.tol}`);
 
       //Check paths for all posible joins
       let cur_a = path_a.start;
@@ -253,7 +265,6 @@ class SJoin extends SNode{
       let b_i = 0;
 
       let links = [];
-
       let next = () => {
         if (cur_a != path_a.end){
           cur_a = cur_a.next;
@@ -273,10 +284,8 @@ class SJoin extends SNode{
                 fill: 'none'
               })
 
-              if(this.__isOverlaping(path_a, path_b, joint)){
+              if(this.___isOverlaping(path_a, path_b, joint)){
                 links.push({a: cur_a, b: cur_b, a_i:a_i, b_i:b_i});
-              }else{
-                // link_finder_group.removeChild(joint)
               }
             }
           }
@@ -284,8 +293,10 @@ class SJoin extends SNode{
           b_i = 0;
           window.requestAnimationFrame(next)
         }else{
-          path_a.setStroke('red', '1')
-          path_b.setStroke('red', '1')
+          path_a.el.setStroke('red',`1`);
+          if (links.length == 0){
+            path_b.el.setStroke('red',`1`);
+          }
           this.sTree.el.removeChild(link_finder_group)
           if ( callback instanceof Function){
             callback(links)
