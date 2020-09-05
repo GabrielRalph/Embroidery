@@ -1,8 +1,7 @@
 class SPath extends SNode{
-  constructor(sTree, group, specs = null){
-    super(sTree)
+  constructor(group, sTree){
+    super(group, sTree);
 
-    this.vNode.color = 'uncomputed'
 
     this._end = null;
     this._start = null;
@@ -13,6 +12,7 @@ class SPath extends SNode{
 
     this.mode = 'uncomputed'
 
+    let specs = this.sTree.getSpecs(group)
     this.stitchGenerator = new StitchPath(group, this, specs)
     this.onclick = () => { this.compute()}
   }
@@ -38,7 +38,7 @@ class SPath extends SNode{
     //  Types:
     //   ~ String: follow|point is a moving average of this.end
     //   ~ Vector
-    focus(point){
+    focus(point = null){
       if (point === 'follow'){
         point = this.end.point
         let cur = this.end
@@ -53,12 +53,15 @@ class SPath extends SNode{
           }
         }
         point = point.div(i)
+      }else if(point == null){
+        point = this.start.point.add(this.end.point).div(2);
       }
-      let svg = this.sTree.output_svg;
+      let svg = this.sTree.el;
       let box = svg.parentNode;
 
       let svg_size = new Vector(svg.clientWidth, svg.clientHeight);
       let box_size = new Vector(box.clientWidth, box.clientHeight);
+
       let viewbox = svg.getViewBox()
 
       point = point.sub(viewbox.offset)
@@ -69,14 +72,14 @@ class SPath extends SNode{
 
     // Creates an svg path and sets its class to .stitch-style
     createPath(){
-      this.visualizer_path = this.el.createChild('path', {class: 'stitch-style'})
+      this.visualizer_path = this.el.createChild('path', {class: 'stitch-style', fill: 'none'})
     }
 
     render(){
       if (this.visualizer_path == null){
         this.createPath()
       }
-      this.visualizer_path.setAttribute('d',`${this}`)
+      this.visualizer_path.setAttribute('d',`${this}${this.isLoop(1)?'Z':'z'}`)
       this.visualizer_path.setAttribute('stroke',`${this.color}`)
     }
 
@@ -88,7 +91,7 @@ class SPath extends SNode{
         this.render()
         cur.next = temp;
         cur = temp;
-        if (cur == this.end){
+        if (cur == null){
           this.render()
         }else{
           window.requestAnimationFrame(nextFrame)
@@ -102,9 +105,10 @@ class SPath extends SNode{
     if(this.mode == 'uncomputed'){
       this.mode = 'computing'
       this.stitchGenerator.computeOnAnimationFrame(() => {
-        this.mode = 'computed'
-        this.vNode.color = 'computed'
-        this.vNode.__update()
+        this.mode = 'computed';
+        this.type = 'computed';
+        this.el.innerHTML = '';
+        this.el.appendChild(this.visualizer_path)
         if (callback){
           callback()
         }
@@ -112,13 +116,20 @@ class SPath extends SNode{
     }
   }
 
-  computeAll(callback){
-    this.compute(callback)
-    for (var i = 0; i < this.children.length; i++){
-      this.children[i].computeAll(callback)
+  forEveryStitch(callback){
+    if (callback instanceof Function){
+      let cur = this.start;
+      let i = 0;
+      callback(cur, i);
+      while (cur != this.end || cur.next != null){
+        cur = cur.next;
+        i++;
+        callback(cur, i)
+      }
+    }else{
+      throw `Error calling forEveryPoint:\nCallback must be a function`
     }
   }
-
 
   set color(val){
     this._color = val;
@@ -126,33 +137,23 @@ class SPath extends SNode{
   get color(){
     return this._color
   }
+
   set end(val){
     this._end = val;
   }
   get end(){
     return this._end;
   }
+
   set start(val){
     this._start = val;
   }
   get start(){
     return this._start;
   }
-  set mode(mode){
-    this._mode = mode;
-    if (this.el){
-      this.el.setAttribute('mode',mode)
-    }
-    if (this.vNode){
-      this.vNode.__update()
-    }
-  }
-  get mode(){
-    return this._mode
-  }
+
   set progress(progress){
-    this._progress = progress;
-    this.vNode.__update();
+    this.el.progress = progress;
   }
   get progress(){
     if (this._progress){
@@ -225,6 +226,18 @@ class SPath extends SNode{
     }
     this.render()
   }
+  remove(stitch){
+    let p1 = stitch.last;
+    let p2 = stitch.next;
+    if (p1 != null){
+      p1.next = p2;
+    }
+    if (p2 != null){
+      p2.last = p1;
+    }
+    stitch.next = null;
+    stitch.last = null;
+  }
   putAfter(stitch, location){
     if (stitch instanceof Vector){
       stitch = new Stitch(stitch)
@@ -236,13 +249,17 @@ class SPath extends SNode{
       stitch.last = location
       location.next = stitch
     }else if (stitch instanceof SPath){
-      this.size += stitch.size;
-      let next_location = location.next;
-      stitch.end.next = next_location
-      next_location.last = stitch.end
+      if (location == this.end){
+        this.push(stitch)
+      }else{
+        this.size += stitch.size;
+        let next_location = location.next;
+        stitch.end.next = next_location;
+        next_location.last = stitch.end
+        stitch.start.last = location
+        location.next = stitch.start
 
-      stitch.start.last = location
-      location.next = stitch.start
+      }
     }
 
     this.render()
@@ -282,6 +299,10 @@ class SPath extends SNode{
     loop.push(location.clone())
 
     this.putAfter(loop, location)
+    loop.parentNode.removeChild(loop.el);
+    if (this.parentNode.children.length == 1){
+      this.parentNode.parentNode.replaceChild(this.el, this.parentNode);
+    }
   }
 
   isLoop(max_length = 40){
@@ -362,6 +383,34 @@ class SPath extends SNode{
       cur = cur.last;
       this.push(cur.clone())
     }
+  }
+
+  staggerBack(){
+    let cur_1 = this.end.last.last;
+    let cur_2 = cur_1.last.last.last;
+
+    let size = (this.size/2);
+
+    size = (size - size%2)/2 - 1;
+    let l_cur_1 = cur_1;
+    let l_cur_2 = cur_2;
+
+    while(size > 0){
+      if (size > 1){
+        cur_1 = cur_1.last.last.last.last;
+        cur_2 = cur_2.last.last.last.last;
+      }
+      this.remove(l_cur_1);
+      this.remove(l_cur_2);
+      this.push(l_cur_2)
+      this.push(l_cur_1);
+      l_cur_1 = cur_1;
+      l_cur_2 = cur_2;
+      size --;
+    }
+
+    this.animate()
+    // this.render()
   }
 
   reflect(mode = 'v'){

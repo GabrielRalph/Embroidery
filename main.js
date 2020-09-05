@@ -1,88 +1,100 @@
-let group = document.getElementById('design')
-let render = document.getElementById('render')
-let node = document.getElementById('node_render')
-let tools = document.getElementById('tool-box')
-let download = document.getElementById('download_link')
-
-// setTimeout(() => {
-//   tools.style.setProperty('visibility', 'visible')
-//   let exporter = new DSTExporter(download)
-//   exporter.exportSPath(tree.root)
-// }, 2000)
-
-
-// console.log(tree);
-// window.onerror = (err) => {
-//   alert(err)
-//   console.log(err);
-// }
-// let toolBox = new ToolBox('tool-box');
-// toolBox.show('join-mode')
-let sTree = new STree('output-svg-box', 'node_render', 'tool-box')
-
-let input_svg = document.getElementById('input-svg-box')
-function openSvg(e){
-  var reader = new FileReader();
-  sTree.download_element = download;
-  reader.onload = function(event) {
-      input_svg.innerHTML = event.target.result;
-      let viewBox = input_svg.children[0].getAttribute('viewBox')
-      sTree.output_svg.setAttribute('viewBox',viewBox)
-      let group = document.getElementById('EMB');
-      if (group){
-        sTree.build(group)
-      }else{
-        throw `No group with id EMB, set main group of designs id to EMB`
-      }
-  };
-  reader.readAsText(e.target.files[0]);
-}
-
-let local = window.localStorage.getItem('output')
-if (local != null){
-  input_svg.innerHTML = local;
-  let viewBox = input_svg.children[0].getAttribute('viewBox')
-  sTree.output_svg.setAttribute('viewBox',viewBox)
-  let groups = input_svg.getElementsByTagName('g');
-  sTree.build(groups[0])
-}
-
-
-function saveSvg(e){
-
-  let output = sTree.output_svg.outerHTML;
-  // Remove defs
-  output = output.replace(/<defs(\s|\S)*?>(\s|\S)*?<\/defs>/g, '')
-
-  // Remove excess white space
-  output = output.replace(/ ( +)/g, '').replace(/^(\n)/gm, '')
-  output = output.replace(/></g, '>\n<')
-
-  //Autoindent
-  output = output.split('\n');
-  var depth = 0;
-  var newOutput = ''
-  for (var i = 0; i < output.length; i++){
-    depth += (output[i].search(/<\/(g|svg)>/) == -1)?0:-1;
-    for (var j = 0; j < depth; j++){
-      newOutput += '\t'
-    }
-    newOutput += output[i] + '\n';
-    depth += (output[i].search(/<(g|svg)(\s|\S)*?>/) == -1)?0:1;
+let sTree = new STree('node-svg');
+sTree.el = document.getElementById('EMB')
+class CtxMenu{
+  constructor(parent = document.body){
+    this.el = document.createElement('DIV');
+    this.el.setProps({class: 'ctx-menu'})
+    this.parent = parseElement(parent);
+    this.__attachRightClickEvent();
   }
 
-  window.localStorage.setItem('output', newOutput)
+  set hide(val){
+    this._hide = val
+    if(val){
+      if (this.parent.contains(this.el)){
+        this.parent.removeChild(this.el)
+      }
+    }else{
+      this.parent.appendChild(this.el)
+    }
+  }
+  get hide(){
+    return this._hide;
+  }
 
-  var blob = new Blob([newOutput], {type: "text/plain"});
-  var url = null;
+  __attachRightClickEvent(){
+    this.parent.addEventListener('contextmenu', (ev) => {
+        ev.preventDefault();
+        this.location = ev;
+        this.hide = false;
+        this.__attachMoveAwayEvent();
+        return false;
+    }, false);
+  }
+  __attachMoveAwayEvent(){
+    this.parent.addEventListener('mousemove', (ev) => {
+      let over = false;
+      ev.path.forEach((path) => {
+        if (path.className == 'ctx-menu'){
+          over = true;
+        }
+      });
+      let p = new Vector(ev);
+      let d = p.distance(this.location);
 
-  if (url == null){
-    url = window.URL.createObjectURL(blob);
+      if (!over && d > 75){
+        this.hide = true;
+        this.parent.onmousemove = null;
+      }
+    })
+  }
 
-    var a = document.createElement("a");
-    a.setAttribute('download', 'test.svg')
-    a.setAttribute('href', url)
-    document.body.appendChild(a);
-    a.click()
+  set options(ops){
+    if (ops instanceof Object){
+      this._options = {};
+      for (name in ops){
+        if (ops[name] instanceof Function){
+          this._options[name] = ops[name]
+        }else{
+          throw `${ops[name]} is not a valid function`
+        }
+      }
+    }else{
+      throw `Options must be an Object in form\n{\noption_name: callback,\noption_name2: callback2\n}`
+    }
+    this.el.innerHTML = ''
+    for (name in this._options){
+      this.el.createChild('H1', {textContent: name, onclick: this._options[name]})
+    }
+  }
+  get options(){
+    return this._options
+  }
+
+  set location(location){
+    if (location.x && location.y){
+      this._location = new Vector(location);
+      this.el.setProps({style: {top: `${location.y}px`, left: `${location.x}px`}})
+    }else{
+      throw `Location must be a vector with x, and y coordinates`
+    }
+  }
+  get location(){
+    return this._location
+  }
+}
+
+let ctxMenu = new CtxMenu();
+ctxMenu.options = {
+  'Open Svg': () => {
+    try{
+      sTree.openSvg('svg-box')
+    }catch(e){
+      console.log('x');
+    }
+
+  },
+  'Save Svg': () => {
+    sTree.saveSvg()
   }
 }

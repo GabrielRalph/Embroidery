@@ -399,6 +399,19 @@ class DSTExporter{
     return url
   }
 
+  download(){
+    let url = this.downloadURL();
+    var a = document.body.createChild("a", {download: 'filename.dst', href: url});
+    a.click()
+    a.parentNode.removeChild(a)
+  }
+
+  exportSJoin(sJoin){
+    sJoin.sPaths.forEach((sPathG) => {
+      this.dstBuffer.encodeSPath(sPathG.sNode)
+    });
+  }
+
   addSNode(sNode){
     if (sNode instanceof SPath){
       this.dstBuffer.encodeSPath(sNode)

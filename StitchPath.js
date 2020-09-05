@@ -1,3 +1,16 @@
+//StitchPath
+//Params:
+//       group: SVGGElelement + SvgPlus
+//       sPath: SPath
+//       specs:
+//
+
+
+
+
+
+
+
 class StitchPath{
   constructor(group, sPath, specs = null){
     this.sPath = sPath;
@@ -5,7 +18,7 @@ class StitchPath{
     this.max_length = 3;
     this.min_length = 1;
     this.max_var = 0.5;
-    this.mode = 'RunningStitch';
+    this.mode = 'computed';
     this.loop = null;
     this.order = null;
 
@@ -16,43 +29,29 @@ class StitchPath{
     this._pgrs = null;
 
     this.svg_group = group
-
-    this.specs = specs
-    this.assignAttributes()
-  }
-
-  assignAttributes(){
-    if (this.svg_group.hasAttribute('mode')){
-      this.mode = this.svg_group.getAttribute('mode')
-    }
-    if (this.svg_group.hasAttribute('loop')){
-      this.loop = this.svg_group.getAttribute('loop')
-    }
-    if (this.svg_group.hasAttribute('order')){
-      this.order = this.svg_group.getAttribute('order')
-    }
-    if (this.svg_group.hasAttribute('max_length')){
-      this.max_length = parseFloat(this.svg_group.getAttribute('max_length'))
-    }
-    if (this.svg_group.hasAttribute('min_length')){
-      this.min_length = parseFloat(this.svg_group.getAttribute('min_length'))
-    }
-    if (this.svg_group.hasAttribute('max_var')){
-      this.max_var = parseFloat(this.svg_group.getAttribute('max_var'))
-    }
-    if (this.svg_group.hasAttribute('max_var')){
-      this.max_var = parseFloat(this.svg_group.getAttribute('max_var'))
-    }
-    if (this.svg_group.hasAttribute('stroke')){
-      this.sPath.color = this.svg_group.getAttribute('stroke')
+    this.specs = specs;
+    if (group.getAttribute('type') == 'computed'){
+      this.mode = 'computed'
     }
   }
 
-  set specs(spec){
-    if(spec != null){
-      for (var key in spec){
-        this[key] = spec[key]
-      }
+  set specs(specs){
+    if (specs instanceof SVGTextElement){
+      let str = specs.textContent;
+      this['mode'] = str.replace(/{((.|\n|\t|\r)*?)}/, (a, b) => {
+        let v = b.split(/,|\n/);
+        v.forEach((item) => {
+          let key = item.replace(/( |\n|\t|\r|(mm))*/g, '').split(':');
+          if (key[0]){
+            this[key[0]] = key[1];
+          }
+        });
+        return ''
+      }).replace(/( |\n|\t|\r|:)*/g, '');
+    }else if(specs === null){
+      this.mode = 'computed'
+    }else{
+      throw `specs can only be a SVGTextElement not ${specs}`
     }
   }
 
@@ -90,7 +89,12 @@ class StitchPath{
         }else{
           if (callback){
             if(this.loop == 'back'){
-              this.sPath.loopBack()
+              console.log(this.mode);
+              if (this.mode == 'SatinColumn'){
+                this.sPath.staggerBack()
+              }else{
+                this.sPath.loopBack()
+              }
             }
 
             callback()
@@ -111,8 +115,9 @@ class StitchPath{
   //Starts a SatinColumn stitch
   __startSatinColumn(dir = false){
     // Set Paths
-    this.path = this.svg_group.getElementsByTagName('path')[0]
-    this.path_2 = this.svg_group.getElementsByTagName('path')[1]
+
+    this.path = this.svg_group.children[0]
+    this.path_2 = this.svg_group.children[1]
 
     // Setup end points
     this.end = this.path.getTotalLength()
@@ -183,7 +188,7 @@ class StitchPath{
   __startRunningStitch(){
 
     //Set Path
-    this.path = this.svg_group.getElementsByTagName('path')[0]
+    this.path = this.svg_group.children[0]
 
     //Set length counter and end length
     this.l = 0

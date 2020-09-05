@@ -16,13 +16,11 @@ let parseElement = (elem) => {
   }else if ((`${elem.constructor}`).indexOf('Element') != -1){
     return elem
   }else{
+    return null
     throw 'invalid element'
   }
 }
 
-SVGElement.prototype.setBackground = function (color){
-  this.style.setProperty('background', color)
-}
 
 SVGElement.prototype.createChild = function (name, props = null){
   let el = null
@@ -35,7 +33,24 @@ SVGElement.prototype.createChild = function (name, props = null){
   this.appendChild(el)
   return el
 }
+Element.prototype.createChild = function (name, props = null){
+  let el = null
+  if(props == null){
+    el = document.createElement(name);
+  }else{
+    el = document.createElement(name);
+    for (key in props){
+      el[key] = props[key]
+    }
+  }
+  this.appendChild(el)
+  return el
+}
 
+
+SVGElement.prototype.setBackground = function (color){
+  this.style.setProperty('background', color)
+}
 SVGElement.prototype.setStroke = function (color, width = null){
   this.style.setProperty('stroke', color)
   if (width != null){
@@ -63,26 +78,6 @@ Element.prototype.setStyles = function (styles) {
     }
   }
 }
-SVGElement.prototype.getViewBox = function (mode = null) {
-  let viewBox_string = this.getAttribute('viewBox');
-  let viewBox_array = viewBox_string.split(' ');
-  let offset = new Vector(viewBox_array)
-  let size = new Vector(viewBox_array, 2)
-  if (mode == null){
-    return {
-      size: size,
-      offset: offset
-    }
-  }else if(mode == 'outline_path'){
-    let c2 = new Vector(offset.x, offset.y + size.y);
-    let c3 = offset.add(size);
-    let c4 = new Vector(offset.x + size.x, offset.y)
-    return `M${offset}L${c2}L${c3}L${c4}Z`
-  }
-}
-SVGElement.prototype.getLastChild = function () {
-  return this.children[this.children.length - 1]
-}
 SVGElement.prototype.setProps = function (json) {
   for (var key in json){
     var value = json[key]
@@ -102,6 +97,27 @@ Element.prototype.setProps = function (json) {
       this.setStyles(value)
     }
   }
+}
+
+SVGElement.prototype.getViewBox = function (mode = null) {
+  let viewBox_string = this.getAttribute('viewBox');
+  let viewBox_array = viewBox_string.split(' ');
+  let offset = new Vector(viewBox_array)
+  let size = new Vector(viewBox_array, 2)
+  if (mode == null){
+    return {
+      size: size,
+      offset: offset
+    }
+  }else if(mode == 'outline_path'){
+    let c2 = new Vector(offset.x, offset.y + size.y);
+    let c3 = offset.add(size);
+    let c4 = new Vector(offset.x + size.x, offset.y)
+    return `M${offset}L${c2}L${c3}L${c4}Z`
+  }
+}
+SVGElement.prototype.getLastChild = function () {
+  return this.children[this.children.length - 1]
 }
 SVGElement.prototype.getScale = function () {
   let oldscale = this.style.transform
@@ -157,5 +173,26 @@ SVGUseElement.prototype.setParams = function (params){
   this.innerHTML = ''
   for (var name in params){
     this.innerHTML += `<param name = '${name}' value = '${params[name]}' />`
+  }
+}
+SVGGeometryElement.prototype.isGeometry = function (){
+  return true;
+}
+SVGElement.prototype.isGeometry = function (){
+  return false
+}
+SVGElement.prototype.forEach = function (callback){
+  if (callback instanceof Function){
+    for (var i = 0; i < this.children.length; i++){
+      callback(this.children[i], i);
+    }
+  }
+}
+
+HTMLCollection.prototype.forEach = function (callback){
+  if (callback instanceof Function){
+    for (var i = 0; i < this.length; i++){
+      callback(this[i], i);
+    }
   }
 }
