@@ -48,12 +48,14 @@ class Vector{
 	assign(){
 		return new Vector(this.x, this.y)
 	}
+
+	//Redundant
   extend(val){
     return new Vector(this.x*val, this.y*val)
   }
 	grad(v2){
 		if (v2.x - this.x == 0){
-			return 10000000000
+			return Infinity
 		}
 		return (v2.y - this.y)/(v2.x - this.x)
 	}

@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
   <script type="text/javascript" src="../vector.js"></script>
+  <script type="text/javascript" src="./LinkList.js"></script>
   <script type="text/javascript" src="./SvgPlus.js"></script>
 
   <body>
@@ -33,13 +34,14 @@
     // SVGPlus.importFromObject('svg-object', (svg) => {
     //   console.log(svg);
     // })
+
     let list = new LinkList()
     let list2 = new LinkList()
     let item1 = new LinkItem();
     let item2 = new LinkItem();
     let item3 = new LinkItem();
     let item4 = new LinkItem();
-    let item5 = new LinkItem();
+    let item5 = new SvgCPoint('c0,0-0.3,9.6,0,9.6');
     let item6 = new LinkItem();
 
     list.push(item1);
