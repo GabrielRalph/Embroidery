@@ -282,6 +282,7 @@ class SPath extends SNode{
     }
     return false
   }
+
   join(path, offset = this.start){
     var i = 0;
     let res = false;
@@ -293,7 +294,7 @@ class SPath extends SNode{
   }
 
   //Inserts another sPaths link list
-  insertLoop(loop, location, rotation = 1){
+  insertLoop(loop, location, rotation = 0){
     loop.rotate(rotation)
     loop.push(loop.start.clone())
     loop.push(location.clone())

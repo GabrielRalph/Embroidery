@@ -121,7 +121,8 @@ class STree{
     }else if (svg_el instanceof SVGSVGElement){
 
       // Check if the element has any SVGGElements inside it
-      let groups = svg_el.getElementsByTagName('g');
+      let groups = svg_el.children;
+      console.log(groups);
       if (groups.length == 0){
         this._el = null;
         throw `Error setting el:\nThe Svg does not contain any SVG Group elements`
@@ -129,11 +130,8 @@ class STree{
       //Get the root group - first group with id: STree, if none the first group
       }else{
         let root = groups[0];
-        for (var i = 0; i < groups.length; i++){
-          if (groups[i].id == 'STree'){
-            group = groups[i];
-            break;
-          }
+        if (groups.STree){
+          root = groups.STree;
         }
 
         try {
@@ -224,7 +222,10 @@ class STree{
         clicks = 0;
       }, 600)
     }
-
+    this.el.onwheel = (e) => {
+      e.preventDefault();
+      this.size += e.deltaY*0.01;
+    }
     this.el.ondblclick = (e) => {
       e.preventDefault();
       this.size = 100;
@@ -274,7 +275,7 @@ class STree{
         case 'stupid':
         let child = node.children[0]
         node.parentNode.replaceChild(child, node);
-        validate_node(child);
+        this.__validate_node(child.parentNode);
         break;
 
         default:
@@ -317,6 +318,8 @@ class STree{
       }else if((group_cnt > 0) && (geometry_cnt == 0) && (text_cnt == 0||text_cnt == 1)){
         return 'SJoin'
       }else if((group_cnt == 1) && (geometry_cnt == 0) && (text_cnt == 0||text_cnt == 1)){
+        return 'stupid'
+      }else if(group_cnt == 0 && geometry_cnt == 0 && text_cnt == 1){
         return 'stupid'
       }else if(group_cnt == 0&&geometry_cnt == 0&&text_cnt == 0){
         return 'empty'

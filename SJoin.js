@@ -1,12 +1,19 @@
 class SJoin extends SNode{
   constructor(group, sTree){
     super(group, sTree)
-    this.onclick = () => {
-      this[this.mode]()
-    }
+    this.startEventListeners()
     let mode = this.mode;
     this.max_length = 20;
     this.tol = 5
+  }
+
+  startEventListeners(){
+    this.onclick = () => {
+      this[this.mode]()
+    }
+  }
+  stopEventListeners(){
+    this.onclick = null
   }
 
   get mode(){
@@ -87,7 +94,15 @@ class SJoin extends SNode{
   }
 
   export(){
+    this.stopEventListeners();
     let sPaths = this.sPaths;
+    sPaths.forEach((sPath) => {
+      sPath.sNode.reflect('h')
+    });
+    this.sTree.root_el.setStyles({
+      transform: `scale(1, -1)`
+    })
+
     switch (sPaths.length) {
       case 0:
         throw `Error calling export:\nEmpty node`
@@ -97,8 +112,13 @@ class SJoin extends SNode{
         break;
       default:
         this._arrange(sPaths)
+        sPaths.forEach((sPath) => {
+          sPath.sNode.push(sPath.sNode.start.clone())
+        });
+
         this.animate()
     }
+    this.startEventListeners();
   }
 
   _arrange(sPaths, i = 0){
@@ -175,11 +195,12 @@ class SJoin extends SNode{
     let cur_path = sPaths[i].sNode;
     let cur_s = cur_path.start;
 
-    let p = this.sTree.el.createChild('path',{
+    let p = this.sTree.root_el.createChild('path',{
       stroke: 'blue',
       'stroke-width': '2',
       fill: 'none'
     })
+    p.addPoint(new Vector(0,0))
 
     let next = () => {
       p.addPoint(cur_s.point)
@@ -204,6 +225,8 @@ class SJoin extends SNode{
   }
 
   join(sPaths = this.sPaths){
+    this.stopEventListeners();
+
     if (sPaths.length > 1){
       let path_a = sPaths.shift();
       let path_b = sPaths.shift();
@@ -216,7 +239,7 @@ class SJoin extends SNode{
             this.join(sPaths);
           }else{
             alert('No Solutions');
-
+            this.startEventListeners();
           }
 
           //Links Found
@@ -227,9 +250,13 @@ class SJoin extends SNode{
 
           if ( this.sPaths.length > 1){
             this.join(this.sPaths)
+
+            //DONE
           }else{
             path_a.sNode.animate();
-            this.___updateAllSJoinModes()
+            this.___updateAllSJoinModes();
+            this.startEventListeners();
+
           }
         }
 

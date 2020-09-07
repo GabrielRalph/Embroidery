@@ -88,7 +88,7 @@ class StitchPath{
           this.sPath.focus('follow')
         }else{
           if (callback){
-            if(this.loop == 'back'){
+            if(this.loop === 'back'){
               console.log(this.mode);
               if (this.mode == 'SatinColumn'){
                 this.sPath.staggerBack()
@@ -96,7 +96,6 @@ class StitchPath{
                 this.sPath.loopBack()
               }
             }else{
-              this.sPath.push(this.sPath.start.clone())
             }
 
             callback()
