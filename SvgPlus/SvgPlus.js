@@ -674,6 +674,55 @@ class LinkList{
       throw `Error calling putAfter:\nThe item given is not a LinkList or LinkItem`
     }
   }
+
+  // Connect the end and start
+  // <end> next <=> last <start>
+  set loop(val = false){
+    if (typeof val === 'boolean'){
+      if (val) {
+        if (!(this.end == null || this.start == null)){
+          this.end.link(this.start);
+        }
+      }else{
+        if (this.end == null || this.start == null){
+          this.end.break('next')
+        }
+      }
+      this._loop = true;
+    }else{
+      throw `Error setting loop:\nLoop can be either set true or false`
+    }
+  }
+  get loop(){
+    return this._loop
+  }
+
+  rotate(x = 1){
+    if (typeof x !== 'number'){
+      throw `Error rotating list:\nrotate takes a number`
+      return
+    }else if ((this.end == this.start) || (this.end == null || this.start == null)){
+      return
+    }
+
+    let old_loop = this.loop;
+    let dir = (x > 0);
+    x = Math.abs(x);
+    this.loop = true;
+
+    while (x > 0){
+      if (dir){
+        this.end = this.end.next;
+        this.start = this.start.next;
+      }else{
+        this.end = this.end.last;
+        this.start = this.start.last;
+      }
+      x--;
+    }
+
+    this.loop = old_loop;
+  }
 }
 
 let SVGPlus = {
