@@ -33,7 +33,26 @@
     // SVGPlus.importFromObject('svg-object', (svg) => {
     //   console.log(svg);
     // })
-    console.log({c: document.getElementById('test-path')})
+    let list = new LinkList()
+    let list2 = new LinkList()
+    let item1 = new LinkItem();
+    let item2 = new LinkItem();
+    let item3 = new LinkItem();
+    let item4 = new LinkItem();
+    let item5 = new LinkItem();
+    let item6 = new LinkItem();
+
+    list.push(item1);
+    list.push(item2);
+    list.push(item3);
+
+    list2.push(item5)
+    list2.push(item4);
+
+    list.push(list2)
+
+    list.remove(item3)
+    console.log(list);
   // console.log({s: svg});
   // let path = SVGPlus.getElementById('test-path')
   // console.log(path);
