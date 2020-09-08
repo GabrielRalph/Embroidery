@@ -35,26 +35,8 @@
     //   console.log(svg);
     // })
 
-    let list = new LinkList()
-    let list2 = new LinkList()
-    let item1 = new LinkItem();
-    let item2 = new LinkItem();
-    let item3 = new LinkItem();
-    let item4 = new LinkItem();
-    let item5 = new SvgCPoint('c0,0-0.3,9.6,0,9.6');
-    let item6 = new LinkItem();
-
-    list.push(item1);
-    list.push(item2);
-    list.push(item3);
-
-    list2.push(item5)
-    list2.push(item4);
-
-    list.push(list2)
-
-    list.remove(item3)
-    console.log(list);
+    let path = SVGPlus.getElementById('test-path')
+    console.log(path);
   // console.log({s: svg});
   // let path = SVGPlus.getElementById('test-path')
   // console.log(path);

@@ -154,7 +154,7 @@ class SvgGeometry extends SvgElement{
 class SvgPath extends SvgGeometry{
   constructor(el){
     super(el)
-    this.d = new SvgPathD(this.getAttribute('d'));
+    this.d = new SvgDPath(this.getAttribute('d'));
   }
 
   set d_string(val){
@@ -423,7 +423,7 @@ class SvgDPath extends LinkList{
 
     this.clear()
     cmds.forEach((cmd) => {
-      let scmd = new SvgPathCmd(cmd);
+      let scmd = new SvgCPoint(cmd);
       this.push(scmd);
     });
   }
