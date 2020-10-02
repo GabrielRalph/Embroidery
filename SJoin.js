@@ -4,7 +4,7 @@ class SJoin extends SNode{
     this.startEventListeners()
     let mode = this.mode;
     this.max_length = 20;
-    this.tol = 5
+    this.tol = 20
   }
 
   startEventListeners(){
@@ -96,9 +96,22 @@ class SJoin extends SNode{
   export(){
     this.stopEventListeners();
     let sPaths = this.sPaths;
+    let center = this.center
     sPaths.forEach((sPath) => {
-      sPath.sNode.reflect('h')
+      sPath.sNode.sub(center);
     });
+
+    sPaths.forEach((sPath) => {
+      sPath.sNode.reflect('h');
+    });
+
+
+    let bb = this.el.getBBox();
+    console.log(bb);
+    let padding = 5;
+    this.sTree.el.setProps({
+      viewBox: `${-bb.width/2 - padding} ${-bb.height/2 - padding} ${bb.width + 2*padding} ${bb.height+2*padding}`
+    })
     this.sTree.root_el.setStyles({
       transform: `scale(1, -1)`
     })
@@ -189,6 +202,13 @@ class SJoin extends SNode{
     c.rotate(min_d_i_c);
   }
 
+  get center(){
+    let bb = this.el.getBBox();
+    let cx = bb.x + bb.width/2;
+    let cy = bb.y + bb.height/2;
+    return new Vector(cx, cy);
+  }
+
   animate(){
     let sPaths = this.sPaths;
     let i = 0;
@@ -200,7 +220,10 @@ class SJoin extends SNode{
       'stroke-width': '2',
       fill: 'none'
     })
-    p.addPoint(new Vector(0,0))
+
+
+
+    p.addPoint(this.center)
 
     let next = () => {
       p.addPoint(cur_s.point)

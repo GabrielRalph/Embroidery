@@ -247,24 +247,23 @@ class StitchPath{
   }
 
   __startcomputed(){
-    let d_string = this.svg_group.children[0].getD();
-    this.d_array = d_string.replace(/M/, '').split('L');
-    this._pgrs_max = this.d_array.length;
+    this.d_path = new DPath(this.svg_group.children[0].getD());
+    this.d_path.makeAbsolute();
+    this._d_leng = this.d_path.length;
   }
 
   __nextcomputed(){
-    let i = 50;
-    while(i > 0){
-      let d = this.d_array.shift();
-      if (d){
-        let s = new Vector(d.split(','))
-        this._pgrs = (this._pgrs_max - this.d_array.length)/this._pgrs_max;
-        this.__addStitch(s)
-        return true
-      }else{
+    if (this.d_path.length > 0){
+      let p = this.d_path.dequeue();
+      if (p.cmd_type.toUpperCase() == 'Z'){
+        this._pgrs = 1;
         return false
       }
-      i--;
+      this.__addStitch(p.p.round())
+      this._pgrs = (this._d_leng - this.d_path.length)/this._d_leng;
+      return true
+    }else{
+      return false
     }
   }
 }

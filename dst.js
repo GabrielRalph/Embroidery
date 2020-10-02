@@ -90,6 +90,7 @@ class DSTBuffer{
     this.stitch_count = 0;
     this.color_changes = 0;
     this.start_point = new Vector(0,0)
+    this.center_offset = new Vector(0, 0)
   }
   decToDst(p, mode = 'stitch'){
     let x = 0;
@@ -337,7 +338,9 @@ class DSTBuffer{
   encodeSPath(sPath){
     sPath.tieOff()
 
-    let lastPoint = sPath.start.point
+    let curStitch = sPath.start;
+    let lastPoint = curStitch.point;
+
     let jump = null
     if (lastPoint.distance(this.start_point) > 5){
       jump = this.jumpAcross(this.start_point, lastPoint)
@@ -359,18 +362,22 @@ class DSTBuffer{
         this.maxy = cur.point.y>this.maxy?cur.point.y:this.maxy
       }
     }
-    lastPoint = sPath.start
-    while(lastPoint != sPath.end){
-      lastPoint = lastPoint.next;
-      let dPoint = lastPoint.point.sub(lastPoint.last.point)
+    lastPoint = curStitch.point;
+    while(curStitch != sPath.end){
+      curStitch = curStitch.next;
+      let curPoint = curStitch.point;
+
+      let dPoint = curPoint.sub(lastPoint)
       this.addPoint(dPoint, 'stitch')
 
-      this.minx = lastPoint.point.x<this.minx?lastPoint.point.x:this.minx
-      this.miny = lastPoint.point.y<this.miny?lastPoint.point.y:this.miny
-      this.maxx = lastPoint.point.x>this.maxx?lastPoint.point.x:this.maxx
-      this.maxy = lastPoint.point.y>this.maxy?lastPoint.point.y:this.maxy
+      this.minx = curPoint.x<this.minx?curPoint.x:this.minx
+      this.miny = curPoint.y<this.miny?curPoint.y:this.miny
+      this.maxx = curPoint.x>this.maxx?curPoint.x:this.maxx
+      this.maxy = curPoint.y>this.maxy?curPoint.y:this.maxy
+
+      lastPoint = curPoint;
     }
-    this.start_point = lastPoint.point;
+    this.start_point = lastPoint;
   }
 }
 class DSTExporter{
@@ -406,6 +413,8 @@ class DSTExporter{
   }
 
   exportSJoin(sJoin){
+    this.center_offset = sJoin.center;
+    console.log(this.center_offset);
     sJoin.sPaths.forEach((sPathG) => {
       this.dstBuffer.encodeSPath(sPathG.sNode)
     });

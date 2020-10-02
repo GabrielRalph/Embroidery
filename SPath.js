@@ -386,6 +386,15 @@ class SPath extends SNode{
     }
   }
 
+  sub(v){
+    let cur= this.start;
+    cur.point = cur.point.sub(v);
+    while(cur != this.end){
+      cur = cur.next;
+      cur.point = cur.point.sub(v)
+    }
+  }
+
   staggerBack(){
     let cur_1 = this.end.last.last;
     let cur_2 = cur_1.last.last.last;

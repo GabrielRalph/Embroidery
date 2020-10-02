@@ -8,6 +8,7 @@
   <meta name="Stitch" content="Stitch something">
 
   <script type="text/javascript" src="./vector.js"></script>
+  <script type="text/javascript" src="https:///www.svg.plus/SvgPlus.js"></script>
   <script type="text/javascript" src="./svgPlus.js"></script>
   <script type="text/javascript" src="./VNodes.js"></script>
   <script type="text/javascript" src="./SNode.js"></script>
@@ -253,6 +254,7 @@
     bottom: 0;
     margin: 0;
     font-family: monospace;
+    background: rgba(0,0,10, 0.8);
   }
   #node-svg{
     height: 200px;
@@ -283,7 +285,8 @@
   }
   #svg-box svg{
     width: 100vmax;
-    padding: 10vmax;
+    margin: 10vmax;
+    background: white;
   }
   #svg-box svg g, #svg-box svg text, #svg-box svg path{
     pointer-events: none;
