@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
   <script type="text/javascript" src="../vector.js"></script>
+  <script type="text/javascript" src="./LinkList.js"></script>
   <script type="text/javascript" src="./SvgPlus.js"></script>
 
   <body>
@@ -33,7 +34,9 @@
     // SVGPlus.importFromObject('svg-object', (svg) => {
     //   console.log(svg);
     // })
-    console.log({c: document.getElementById('test-path')})
+
+    let path = SVGPlus.getElementById('test-path')
+    console.log(path);
   // console.log({s: svg});
   // let path = SVGPlus.getElementById('test-path')
   // console.log(path);
