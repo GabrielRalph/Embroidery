@@ -7,8 +7,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="Stitch" content="Stitch something">
 
-  <script type="text/javascript" src="./vector.js"></script>
   <script type="text/javascript" src="https:///www.svg.plus/SvgPlus.js"></script>
+  <script type="text/javascript" src="https:///www.svg.plus/vector.js"></script>
   <script type="text/javascript" src="./svgPlus.js"></script>
   <script type="text/javascript" src="./VNodes.js"></script>
   <script type="text/javascript" src="./SNode.js"></script>
@@ -255,6 +255,7 @@
     margin: 0;
     font-family: monospace;
     background: rgba(0,0,10, 0.8);
+    overflow: hidden;
   }
   #node-svg{
     height: 200px;
@@ -278,14 +279,17 @@
     background: #ff590066;
     border-radius: 5px;
   }
+  #svg-box::-webkit-scrollbar-corner {
+    display: none;
+  }
 
   /* Handle on hover */
   #svg-box::-webkit-scrollbar-thumb:hover {
     background: #ff5900FF;
   }
   #svg-box svg{
-    width: 100vmax;
-    margin: 10vmax;
+    width: 80vmax;
+    margin: 100vmax;
     background: white;
   }
   #svg-box svg g, #svg-box svg text, #svg-box svg path{
@@ -298,7 +302,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: scroll;
+    /* overflow: scroll; */
   }
   #svg-box svg path{
     stroke-linecap: round;

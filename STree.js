@@ -2,7 +2,7 @@ class STree{
   constructor(node_svg = null){
     this.nodeVisualizer = new NodeVisualizer(node_svg);
     this.el = null;
-    this.size = 100;
+    this.size = 80;
   }
 
   error(e){
@@ -189,7 +189,7 @@ class STree{
         this.el.setProps({style:{width: `${this._size}vmax`}})
       }
     }else{
-      this.size = 100;
+      this.size = 80;
       throw `Error setting size:\n${size} is not a valid number`
     }
   }
@@ -197,52 +197,12 @@ class STree{
     return this._size;
   }
 
+
   addUserControls(){
     if (this.el == null){
       return
     }
-    let svg_size = new Vector(this.el.clientWidth, this.el.clientHeight);
-    let box = this.el.parentNode;
-    let box_size = new Vector(box.clientWidth, box.clientHeight);
-    let scrollloc = svg_size.sub(box_size).div(2)
-    box.scrollTo(scrollloc.x, scrollloc.y)
-
-    this.el.onwheel = (e) => {
-      e.preventDefault()
-      this.size += e.deltaY*0.01;
-    }
-
-    let clicks = 0;
-    this.el.onclick = () => {
-      clicks ++;
-      setTimeout(() => {
-        if (clicks > 2 && !this.root_el.sNode.isComputed()){
-          this.root_el.sNode.computeAll();
-        }
-        clicks = 0;
-      }, 600)
-    }
-    this.el.onwheel = (e) => {
-      e.preventDefault();
-      this.size += e.deltaY*0.01;
-    }
-    this.el.ondblclick = (e) => {
-      e.preventDefault();
-      this.size = 100;
-    }
-    this.el.onmousedown = () => {
-      this.el.onmousemove = (e) => {
-        let move = new Vector(this.parentNode.scrollLeft, this.parentNode.scrollTop);
-        let pos = move.sub(new Vector(e.movementX, e.movementY))
-        this.parentNode.scrollTo(pos.x, pos.y)
-      }
-    }
-    this.el.onmouseup = () => {
-      this.el.onmousemove = null;
-    }
-    this.el.onmouseleave = () => {
-      this.el.onmousemove = null;
-    }
+    this.zoom_and_pan = new ZoomAndPan(this.el);
   }
   __validate(root){
     if (root instanceof SVGGElement){

@@ -3,6 +3,9 @@ sTree.el = document.getElementById('EMB');
 window.onerror = (err) => {
   alert(err)
 }
+let box = sTree.el.parentNode;
+console.log({b: box});
+sTree.el.scrollIntoView({block: 'center', inline: 'center'});
 class CtxMenu{
   constructor(parent = document.body){
     this.el = document.createElement('DIV');
