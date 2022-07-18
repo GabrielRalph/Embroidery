@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 26.3.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="1000px" height="1000px" viewBox="0 0 1000 1000" style="enable-background:new 0 0 1000 1000;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#C1272D;}
+	.st1{font-family:'ArialMT';}
+	.st2{font-size:12px;}
+	.st3{fill:none;stroke:#C1272D;stroke-miterlimit:10;}
+	.st4{fill:none;stroke:#000000;stroke-miterlimit:10;}
+	.st5{fill:none;stroke:#E72400;stroke-width:2;stroke-miterlimit:10;}
+</style>
+<g id="Layer_2_00000039828637977979723470000014158166397399365553_">
+	<text transform="matrix(1 0 0 1 463.298 460.0133)" class="st0 st1 st2">Center</text>
+	<line class="st3" x1="157.9" y1="447.1" x2="850.5" y2="447.1"/>
+	<line class="st3" x1="504.2" y1="793.5" x2="504.2" y2="100.8"/>
+</g>
+<g id="Layer_1_00000138559566964579023700000003481860407165919675_">
+	<g>
+		
+			<ellipse transform="matrix(0.6023 -0.7983 0.7983 0.6023 -26.0589 608.5436)" cx="597.696" cy="330.424" rx="49.901" ry="75.402"/>
+		<text transform="matrix(1 0 0 1 605.3018 220.2031)" class="st1 st2">CrossHatchFill{</text>
+		<text transform="matrix(1 0 0 1 605.3018 234.6031)" class="st1 st2">stitch length: 2mm,</text>
+		<text transform="matrix(1 0 0 1 605.3018 249.0031)" class="st1 st2">stitch density: 0.3mm</text>
+		<text transform="matrix(1 0 0 1 605.3018 263.4031)" class="st1 st2">}</text>
+	</g>
+	<g>
+		<g>
+			<path class="st4" d="M248.1,390.9c0,0,98.6-136.1,177.8-77.8c39.6,29.2,84.7,70.1,127.3,95.5s82.5,35.1,111.6,1.7
+				c58.3-66.7,180.6,161.1,0,180.6S512,460.4,391.2,467.3C270.3,474.2,203.3,439.6,248.1,390.9z"/>
+			<path class="st4" d="M338.1,310.4c0,0-24.8-70.9,66.9-63.9s58.3,95.8,58.3,95.8"/>
+			<path class="st4" d="M750.1,541.6c0,0,62.8,41.1-14.1,91.5c-76.9,50.3-104.6-40.5-104.6-40.5"/>
+		</g>
+		<g>
+			<path class="st5" d="M718.8,493.7c-10-15.9-35.8-34.7-71.5-33.7c-35.8,1.1-78.9,3.2-62.1,33.7c16.8,30.5,66.3,84.9,72.6,55.6
+				c6.3-29.3,0-28.3,33.7-27.2S728.8,509.6,718.8,493.7z"/>
+			<path class="st5" d="M242.8,342.3c0,0-63.9,14.6-68,65.6c-4.1,51,5.4,131.9,65.3,126.5"/>
+			<path class="st5" d="M448.2,557.7c21.8,24.3,68.9,85.4,128.5,66.4"/>
+			<path class="st5" d="M782.1,531.4c22-59.8-32.6-140.6-50.7-153c-20.1-13.7-41.6-18.3-69.7,12.4"/>
+			<path class="st5" d="M304.9,301.6c0,0-99.7-74.1,103.7-80.9s79.8,110.5,79.8,110.5"/>
+			<path class="st5" d="M778,548.6c0,0,123.3,14.6-49.7,121.8S604,614.3,604,614.3"/>
+		</g>
+		<text transform="matrix(1 0 0 1 187.9185 251.5713)" class="st1 st2">RunningStitch{</text>
+		<text transform="matrix(1 0 0 1 187.9185 265.9713)" class="st1 st2">max stitch length: 3mm,</text>
+		<text transform="matrix(1 0 0 1 187.9185 280.3713)" class="st1 st2">min stitch length: 1mm,</text>
+		<text transform="matrix(1 0 0 1 187.9185 309.1713)" class="st1 st2">}</text>
+	</g>
+	<g>
+		<polyline class="st4" points="365.5,358.2 325.3,404 375.3,404 382.2,439.3 436.4,398.7 		"/>
+		<polyline class="st4" points="426,391.8 387.7,423.5 383.2,388.9 345.2,394.8 375.5,358.2 		"/>
+	</g>
+</g>
+</svg>

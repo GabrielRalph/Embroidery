@@ -1,0 +1,320 @@
+body {
+  margin: 0;
+}
+emb-app {
+  --tools-width: 40%;
+  --sfunc: rgb(80,192, 255);
+  --sfunc-bg: 63, 61, 59;
+  font-family: "gabriels_handregular";
+  font-size: 13px;
+  --c-dark: #1e1d1c;
+  --c-mid: #3f3d3b;
+  --c-light: #e3dcd6;
+  --c-lighter: #e3dcd655;
+  --c-origin: #e50909;
+  --r1: 5px;
+  --p1: 6px;
+  --b1: 1.5px;
+  --b2: 1px;
+  --c-guide: #ffc19dcf;
+  --c-stitch: #ed8068;
+  position: relative;
+  display: block;
+}
+
+emb-app *[hidden] {
+  display: none;
+}
+
+emb-app:not([has-svg]) .only-svg{
+  display: none;
+}
+
+emb-app:not([selection]) .only-selection{
+  display: none;
+}
+
+.icon svg, svg.icon {
+  height: 1em;
+}
+
+text {
+  user-select: none;
+}
+
+
+emb-app[selection] #svg-space .group :not(g){
+  opacity: 0.3;
+}
+
+
+emb-app[selection] #svg-space *[selected] :not(g),
+emb-app[selection] #svg-space :not(g)[selected]{
+  opacity: 1;
+}
+
+emb-app path {
+  stroke-linecap: round;
+}
+
+
+.tools-anchor {
+  gap: var(--p1);
+  margin: var(--p1);
+  width: var(--tools-width);
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  user-select: none;
+  pointer-events: none;
+  position: absolute;
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.tools-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  height: 100%;
+  gap: var(--p1);
+  position: relative;
+}
+
+/* Visual Tree */
+visual-tree {
+  display: block;
+}
+visual-tree svg {
+  width: 40vw;
+  max-height: 35vh;
+  display: inherit;
+}
+*[highlight] {
+  filter: url("#highlight");
+}
+.vnode[selected] ellipse{
+  stroke: rgba(var(--color), 0.5);
+  stroke-width: 3.5;
+}
+.vnode {
+  fill: rgb(var(--color));
+}
+.loop {
+  fill: none;
+  stroke: rgb(var(--color));
+}
+.geo {
+  --color: 209, 32, 32;
+}
+.group {
+  --color: 240, 228, 50;
+}
+.geo-loop {
+  --color: 252, 99, 41;
+}
+.geo-fill {
+  --color: 242, 92, 20;
+}
+.spath {
+  --color: 20, 130, 242;
+}
+.root {
+  --color: 240, 228, 50;
+  /* --color: 95, 223, 160; */
+}
+.spath-loop {
+  --color: 182, 87, 254;
+}
+path.spath, path.spath-loop {
+  stroke-width: 4;
+  stroke: black;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-miterlimit: 10;
+}
+visual-tree path {
+  fill: none;
+  stroke: black;
+}
+
+/* Node Tools */
+node-tools {
+  display: flex;
+  align-items: flex-end;
+  position: relative;
+}
+
+node-properties {
+  position: absolute;
+  bottom: 0;
+}
+
+emb-app[locked] node-tools {
+  opacity: 0.5;
+}
+
+/* tool box style */
+.tool-box {
+  --tool-i: 0;
+  --tool-h: 1.1em;
+  border-radius: var(--r1);
+  border: var(--b1) solid var(--c-dark);
+  display: flex;
+  flex-direction: column;
+  background: var(--c-mid);
+  color: var(--c-light);
+  white-space: nowrap;
+}
+.tool-box > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: var(--p1);
+  height: var(--tool-h);
+  line-height: var(--tool-h);
+  user-select: none;
+}
+.tool-box > div div {
+  display: inherit;
+  gap: inherit;
+}
+.tool-box div[selected] {
+  background: var(--c-dark);
+}
+.tool-box svg {
+  height: 1em;
+}
+.tool-box input {
+  padding: 0;
+  margin: 0;
+  outline: 0;
+  border: 0;
+  font-family: inherit;
+  background: transparent;
+  border-bottom: 1px solid var(--c-light);
+  color: inherit;
+  width: 5em;
+}
+
+.line-gap > div:nth-of-type(n+2) {
+  border-top: var(--b2) solid var(--c-light);
+}
+
+.selection-list > div{
+  cursor: pointer;
+}
+
+.i-stitch, .i-guide, .i-point, .i-stitch-d{
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-miterlimit: 10;
+}
+.i-stitch-d{
+  stroke-dasharray: 10, 9;
+}
+.i-point, .i-stitch-d, .i-stitch {
+  stroke-width: 7.5;
+}
+.i-fill {
+  fill: var(--c-stitch);
+}
+.i-stitch, .i-stitch-d {
+  stroke: var(--c-stitch);
+}
+.i-point, .i-guide {
+  stroke: var(--c-guide);
+  fill: none;
+}
+.i-guide {
+  stroke-width: 4;
+  stroke: #fff8;
+}
+.i-color-f {
+  fill: #fff;
+}
+
+.props-form {
+  position: absolute;
+  top: calc(var(--tool-i) * (var(--tool-h) + var(--p1) * 2 + var(--b2)));
+  left: 0;
+  transform: translate(calc(-100% - var(--p1)), 0);
+}
+.run-btn {
+  cursor: pointer;
+}
+.props-form > div {
+  gap: 3px;
+  justify-content: flex-end;
+}
+
+
+.vector-selector-cursor {
+  fill: var(--c-origin);
+  stroke: var(--c-origin);
+}
+vector-selector {
+  outline: 1.5px solid var(--c-origin);
+  border-radius: 2em;
+  display: block;
+  padding: 0 0.3em;
+  cursor: pointer;
+}
+
+
+
+.frame {
+  fill:#270c0040;
+}
+
+/* .tools-menu > * {
+} */
+
+
+.head {
+  display: inline-flex;
+  margin: 5px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+}
+.head-title {
+  margin: 0;
+  padding: 5px;
+  border-radius: 0 0 5px 0;
+  outline: 0px;
+  background: var(--c-dark);
+  display: inline-block;
+  color: var(--c-light);
+  user-select: none;
+  float: left;
+}
+.head .icon {
+  fill: var(--c-light);
+  padding-right: 5px;
+}
+
+#svg-space {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+#svg-space svg {
+  height: 100%;
+  width: 100%;
+  cursor: crosshair;
+}
+#svg-space svg[panning] {
+  cursor: grabbing;
+}
+#svg-space *[working] {
+  opacity: 0.3;
+}
+
+emb-app:not([locked]) .nodes > g, emb-app:not([locked]) node-tools, emb-app:not([locked]) node-properties {
+  pointer-events: all;
+}
