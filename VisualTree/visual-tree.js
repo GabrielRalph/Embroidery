@@ -245,9 +245,9 @@ class VisualTree extends SvgPlus {
     this.edges.innerHTML = "";
 
     let recurse = (node) => {
-      if (!node.vnode.isConnected) return;
+      if (!node.vnode || !node.vnode.isConnected) return;
       for (let child of node.children) {
-        if (child.vnode.isConnected){
+        if (child.vnode && child.vnode.isConnected){
           this.___makeEdge(node, child);
           recurse(child);
         }

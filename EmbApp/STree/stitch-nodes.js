@@ -115,6 +115,8 @@ function normaliseGeometry(el) {
     break;
   }
 
+  path.update(3);
+
   return path;
 }
 
@@ -143,7 +145,7 @@ class SNode extends SvgPlus {
 
   makeVNode(node){
     node.classList.add(this.stype);
-
+    node.collapsed = this.collapsed
     function makeText(){
       let idx = this._colorIndex;
       if (typeof idx !== "number") idx = "";
@@ -168,6 +170,12 @@ class SNode extends SvgPlus {
         class: "sfunc"
       };
     }
+
+    Object.defineProperty(node, "selected", {
+      set: (v) => {
+        this.selected = v
+      }
+    })
 
     this.progressBar = node.createChild("path");
   }
@@ -196,21 +204,11 @@ class SNode extends SvgPlus {
 
   set selected(value) {
     this.toggleAttribute("selected", value);
-    if (this.vnode) {
-      this.vnode.toggleAttribute("selected", value);
-    }
   }
-
   set working(value) {
     this.toggleAttribute("working", value);
   }
 
-  set highlight(value) {
-    this.toggleAttribute("highlight", value);
-    if (this.vnode) {
-      this.vnode.toggleAttribute("selected", value);
-    }
-  }
 
   addProperties(props, obj) {
     for (let prop of props) {
@@ -235,14 +233,10 @@ class SNode extends SvgPlus {
 
   set colorIndex(i) {
     this._colorIndex = i;
-    // if (this.vnode) {
-    //   this.vnode.text.innerHTML = i;
-    // }
   }
   get colorIndex(){
     return this._colorIndex;
   }
-
 }
 
 class Geometry extends SNode {

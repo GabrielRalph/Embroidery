@@ -855,9 +855,9 @@ class LinkItem{
   }
 
   update(){
-    // if (this.parent != null){
-    //   this.parent.update();
-    // }
+    if (this.parent != null){
+      this.parent.updated = true;
+    }
   }
 
   set next(next){
@@ -965,9 +965,7 @@ class LinkList{
   }
 
   update(){
-    for(var callback of this._onupdate){
-      callback()
-    }
+    this.updated = true;
   }
 
   // Pushes LinkItem or LinkList at the end of this list
@@ -1313,7 +1311,18 @@ class CPoint extends LinkItem{
     }
   }
 
-
+  static CMDS = {
+    "Z": 0,
+    "M": 2,
+    "L": 2,
+    "T": 2,
+    "C": 6,
+    "H": 1,
+    "V": 1,
+    "S": 4,
+    "Q": 4,
+    "A": 7,
+  }
   /* Set Svg Command Point
   svg-path-command: String
   String Format:
@@ -1327,85 +1336,74 @@ class CPoint extends LinkItem{
   'T x, y' or 't dx, dy'
   'A rx ry x-axis-rotation large-arc-flag sweep-flag x y' or 'a rx ry x-axis-rotation large-arc-flag sweep-flag dx dy' */
   set cmd(string){
-    if (string == null){
-      return
-    }
-    if (typeof string != 'string'){
-      this.cmd_type = null;
-      throw `Error setting cmd:\ncmd must be set a string, not ${typeof string}`
-    }
-    if (string.length < 1) return
+    if (string == null) return;
+    if (typeof string != 'string') return;
+    if (string.length < 1) return;
 
     //Get command type
     let type = string[0];
+    let typea = type.toUpperCase();
 
-    this.cmd_type = type;
-    if (this.cmd_type == null){
-      throw `Error setting cmd:\n${type} is not a valid type`
-    }
+    if (!(typea in CPoint.CMDS)) return;
 
-    //If z, then set cmd_type and return
-    if (type == 'z'|| type == 'Z'){
-      return
-    }
+    let nparams = CPoint.CMDS[typea];
 
-    //Get numbers
-    let param_string = string.slice(1);
     let param_floats = [];
-    try{
-      param_string.replace(/(-?\d*\.?\d+)/g, (num) => {
-        param_floats.push(parseFloat(num))
-      })
-    }catch (err){
-      throw `Error setting cmd:\nError parsing params\n${err}`
+    if (nparams > 0){
+      //Get numbers
+      let param_string = string.slice(1);
+      try{
+        param_string.replace(/(-?\d*\.?\d+)/g, (num) => {
+          param_floats.push(parseFloat(num))
+        })
+      }catch (err){
+        throw `Error setting cmd:\nError parsing params\n${err}`
+      }
     }
 
-    //Check if input is valid according to command type
-    let error = (num, form) => {return `Error setting cmd:\n${string} is of command type: ${type} which requires ${num} number parameters ${form} but ${param_floats.length} where given ${param_floats}`}
-    if (('M|m||L|l||T|t').indexOf(type) != -1){
-      if (param_floats.length != 2){
-        throw error(2, 'x, y');
-      }
-      this.p = new Vector(param_floats);
-    }else if(type == 'C' || type == 'c'){
-      if (param_floats.length != 6){
-        throw error(6, '(x1, y1, x2, y2, x, y)')
-      }
-      this.c1 = new Vector(param_floats)
-      this.c2 = new Vector(param_floats, 2)
-      this.p = new Vector(param_floats, 4)
-    }else if(type == 'H' || type == 'h'){
-      if (param_floats.length != 1){
-        throw error(1, '(x)')
-      }
-      this.x = param_floats[0]
-    }else if(type == 'V' || type == 'v'){
-      if (param_floats.length != 1){
-        throw error(1, '(y)')
-      }
-      this.y = param_floats[0]
-    }else if(type == 'S' || type == 's'){
-      if (param_floats.length != 4){
-        throw error(4, '(x2, y2, x, y)')
-      }
-      this.c2 = new Vector(param_floats)
-      this.p = new Vector(param_floats, 2)
-    }else if(type == 'Q' || type == 'q'){
-      if (param_floats.length != 4){
-        throw error(4, '(x1, y1, x, y)')
-      }
-      this.c1 = new Vector(param_floats)
-      this.p = new Vector(param_floats, 2)
-    }else if(type == 'A' || type == 'a'){
-      if (param_floats.length != 7){
-        throw error(7, '(rx, ry, x-axis-rotation, large-arc-flag, sweep-flag, x, y)')
-      }
-      this.r = new Vector(param_floats);
-      this.x_axis_rotation = param_floats[2];
-      this.large_arc_flag = param_floats[3];
-      this.sweep_flag = param_floats[4];
-      this.p = new Vector(param_floats, 5)
+    if (param_floats.length != nparams) {
+      throw `Error setting cmd: ${string} invalid parameters\n\texpected ${nparams} but ${param_floats.length} where found.`
     }
+
+
+    switch (typea) {
+      case "Z": break;
+      case "C":
+        this.c1 = new Vector(param_floats);
+        this.c2 = new Vector(param_floats, 2);
+        this.p = new Vector(param_floats, 4);
+        break;
+
+      case "H":
+        this.x = param_floats[0];
+        break;
+
+      case "V":
+        this.y = param_floats[0];
+        break;
+
+      case "S":
+        this.c2 = new Vector(param_floats);
+        this.p = new Vector(param_floats, 2);
+        break;
+
+      case "Q":
+        this.c1 = new Vector(param_floats);
+        this.p = new Vector(param_floats, 2);
+        break;
+
+      case "A":
+        this.r = new Vector(param_floats);
+        this.x_axis_rotation = param_floats[2];
+        this.large_arc_flag = param_floats[3];
+        this.sweep_flag = param_floats[4];
+        this.p = new Vector(param_floats, 5);
+        break;
+
+      default:
+        this.p = new Vector(param_floats);
+    }
+
 
     //If inputs where valid set cmd_type
     this.cmd_type = type;
@@ -1745,12 +1743,10 @@ class SvgPath extends SvgPlus{
     super(el);
 
     this._d = new DPath(this.getAttribute('d'));
+  }
 
-    this._d.addUpdateListener(() => {
-      this.setAttribute('d', this.d_string);
-    })
-
-    this.watch({attributes: true})
+  update(decimalPlaces = 3){
+    this.setAttribute("d", this.d.toString(decimalPlaces))
   }
 
   set stroke(stroke){
@@ -1774,13 +1770,6 @@ class SvgPath extends SvgPlus{
 
   get d(){
     return this._d;
-  }
-
-  onmutation(mutation){
-    let d = this.getAttribute('d');
-    if (this.d_string !== d){
-      this.d_string = d;
-    }
   }
 
 

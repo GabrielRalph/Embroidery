@@ -18,6 +18,7 @@ class ElementSelection {
       set: (value) => {
         for (let lastSelected of selection) {
           lastSelected.toggleAttribute("selected", false);
+          lastSelected.selected = false;
         }
 
         if (value == null) return;
@@ -26,6 +27,7 @@ class ElementSelection {
           else [...value]
           for (let selected of value) {
             selected.toggleAttribute("selected", true);
+            selected.selected = true;
           }
           selection = value;
         } catch (e) {}

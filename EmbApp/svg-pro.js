@@ -277,26 +277,32 @@ class SvgPro extends SvgPlus {
     this.cursors = this.createChild("g", {class: "cursors"});
 
     this.vb = new ViewBox(this);
-    window.addEventListener("resize", () => {
-      this.vb.displayRealSize();
-    })
+    let resize = () => {
+      if (!this.isConnected) window.removeEventListener("resize", resize);
+      else this.vb.displayRealSize();
+    }
+    window.addEventListener("resize", resize)
     window.requestAnimationFrame(() => {
       this.vb.displayRealSize();
     })
 
-    window.addEventListener("wheel", (e) => {
-      let sp = this.vb.screenToSVG(e);
-      if (sp instanceof Vector) {
-        this.vb.scaleAtPoint(e.deltaY, sp)
+    let onwheel = (e) => {
+      if (!this.isConnected) window.removeEventListener("wheel", onwheel);
+      else {
+        let sp = this.vb.screenToSVG(e);
+        if (sp instanceof Vector) {
+          this.vb.scaleAtPoint(e.deltaY, sp)
+        }
       }
-    })
+    }
+    window.addEventListener("wheel", onwheel)
 
     let down = false;
     let startt = 0;
     let duration = 0;
     let distance = 0;
     let spos = new Vector;
-    window.addEventListener("mousedown", (e) => {
+    this.addEventListener("mousedown", (e) => {
       down = true;
       startt = performance.now();
       duration = 0;
@@ -305,7 +311,7 @@ class SvgPro extends SvgPlus {
     })
 
     let last = null;
-    window.addEventListener("mousemove", (e) => {
+    this.addEventListener("mousemove", (e) => {
       this.toggleAttribute("panning", false)
       if  (down) {
         this.toggleAttribute("panning", true)
@@ -319,7 +325,7 @@ class SvgPro extends SvgPlus {
       this.onMouseMove(e)
     })
 
-    window.addEventListener("mouseup", (e) => {
+    this.addEventListener("mouseup", (e) => {
       if (last == null) last = spos;
       distance = spos.dist(last);
       duration = performance.now() - startt;

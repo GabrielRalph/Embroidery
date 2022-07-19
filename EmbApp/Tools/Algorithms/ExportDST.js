@@ -441,6 +441,14 @@ const properties = {
 	origin: {
 		type: "vector",
 		default: "center"
+	},
+	back_stitch_length: {
+		type: "string",
+		default: "2"
+	},
+	back_stitch_repeats: {
+		type: "string",
+		default: "1"
 	}
 };
 
@@ -520,9 +528,19 @@ const pattern = /^r?(\([sl\(\)]+\))|([sl])$/
 function parseProperties(props, parser) {
 	let v = props.origin;
 	if (!parser.isVector(v)) {
-		parser.error("Invalid origin vector")
-		parser.throw();
+		parser.error("Invalid origin vector", "origin")
 	}
+
+	let bsl = parseInt(props.back_stitch_length);
+	if (Number.isNaN(bsl)) parser.error("Back stitch length not a number.", "back_stitch_length");
+	else if (bsl < 0) parse.error("Back stitch length must be at least 0", "back_stitch_length");
+	props.back_stitch_length = bsl;
+
+	let bsr = parseInt(props.back_stitch_repeats);
+	if (Number.isNaN(bsr)) parser.error("Back stitch length not a number.", "back_stitch_repeats");
+	else if (bsr < 1) parser.error("Back stitch repeats must be at least 0", "back_stitch_length");
+	props.back_stitch_repeats = bsr;
+	parser.error();
 }
 
 function run(params) {
@@ -565,7 +583,6 @@ function run(params) {
 	const bstitches = 2;
 	const rbs = 1;
 	let backstich = (cpoint, dir = true) => {
-		console.log("backstich");
 		for (let i = 0; i < rbs; i++) {
 			let cur = cpoint;
 			for (let j = 0; j < bstitches; j++) {
@@ -579,7 +596,6 @@ function run(params) {
 				addStitch(cur.p);
 			}
 		}
-		console.log("backstich end");
 	}
 
 	let paths = geo.querySelectorAll(".spath,.spath-loop");
@@ -592,11 +608,9 @@ function run(params) {
 				path.working = true;
 				if (color != null && color != path.color) {
 					dst.changeColor();
-					console.log("color change");
 				}
 
 				color = path.color;
-				console.log(path);
 				let cur = path.dpath.start;
 				jumpTo(cur.p);
 				yield 0;
@@ -617,7 +631,6 @@ function run(params) {
 				}
 				backstich(cur, false);
 				yield 0;
-				console.log(color);
 			}
 
 			for (let path of paths) path.working = false;

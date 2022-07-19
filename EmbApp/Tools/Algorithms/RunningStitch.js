@@ -29,11 +29,11 @@ function splitSegment(start){
 const properties = {
   max_stitch_length: {
     type: "string",
-    default: "2mm",
+    default: "1.5mm",
   },
   min_stitch_length: {
     type: "string",
-    default: "0.5mm",
+    default: "1mm",
   }
 }
 

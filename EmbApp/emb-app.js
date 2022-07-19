@@ -56,6 +56,65 @@ async function delay(t){return new Promise((resolve, reject) => {
   setTimeout(resolve, t);
 });}
 
+class FileMenu extends SvgPlus {
+  constructor(app) {
+    super("div");
+    this.class = "file-menu";
+
+    let fileIcon = this.createChild("div", {class: "file-icon"});
+    fileIcon.createChild("div", {content: "file"})
+    let fileList = this.createChild("div", {class: "tool-box"});
+    let open = fileList.createChild("div", {content: "open"});
+    let save = fileList.createChild("div", {class: "only-stree", content: "save"});
+    let saveSel = fileList.createChild("div", {class: "only-selection", content: "save selection"});
+
+    this.fileList = fileList;
+    this.listHidden = true;
+
+    this.onclick = () => {app.selected = null}
+
+    this.over = false;
+    this.addEventListener("mouseover", () => {
+      this.over = true;
+    });
+    this.addEventListener("mouseleave", () => {
+      this.over = false;
+    })
+
+    fileIcon.onclick = () => {
+      if (this.listHidden) {
+        this.show();
+      } else {
+        this.listHidden = true;
+      }
+    }
+
+    open.onclick = () => {app.open()}
+  }
+
+  show(){
+    if (!this.listHidden) return;
+    this.listHidden = false;
+    let wait = () => {
+      setTimeout(() => {
+        if (this.over && !this.listHidden) {
+          wait();
+        } else {
+          this.listHidden = true;
+        }
+      }, 1000);
+    }
+    wait();
+  }
+
+  set listHidden(v){
+    console.log(v);
+    this.fileList.toggleAttribute("hidden", v)
+    this._listHidden = v;
+  }
+  get listHidden(){return this._listHidden;}
+}
+
 class EmbApp extends SvgPlus {
   constructor(el) {
     super(el);
@@ -63,6 +122,8 @@ class EmbApp extends SvgPlus {
   }
   onconnect() {
     this.innerHTML = "";
+    this.appendChild(new FileMenu(this));
+
     let toolAnchor = this.createChild("div", {class: "tools-anchor"})
     let tools = toolAnchor.createChild("div", {class: "tools-menu"});
     this.svgSpace = this.createChild("div", {id: "svg-space"});
@@ -70,7 +131,7 @@ class EmbApp extends SvgPlus {
     this.visualTree = SvgPlus.make("visual-tree");
     tools.appendChild(this.visualTree);
     this.visualTree.svg.props = {preserveAspectRatio: "xMaxYMid meet"};
-    let selection = new ElementSelection(this.visualTree.nodes);
+    this.nodeSelection = new ElementSelection(this.visualTree.nodes);
     this.visualTree.addEventListener("select", (e) => {
       this.selected = e.value;
     })
@@ -83,13 +144,10 @@ class EmbApp extends SvgPlus {
 
     this.errors = tools.createChild("pre", {class: "errors"})
     this.onclick = (e) => {
-      // console.log( e.dragged);
       if (this.svgSpace.contains(e.target) && !e.dragged) {
-        selection.value = null;
         this.selected = null;
       }
     }
-
   }
 
 
@@ -108,7 +166,11 @@ class EmbApp extends SvgPlus {
 
   // node functions
   set selected(node){
-    this.svg.frame(node);
+    this.toggleAttribute("selection", node != null);
+    if (this.svg) {
+      this.svg.frame(node);
+    }
+    this.nodeSelection.value = node;
     this.nodeProperties.selectedNode = node;
     this.nodeTools.selectedNode = node;
   }
@@ -123,6 +185,7 @@ class EmbApp extends SvgPlus {
   }
 
   set svg(svg) {
+    this.selected = null;
     this.toggleAttribute("stree", false);
     console.log("setting svg");
     if (svg != null) {

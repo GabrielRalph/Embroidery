@@ -45,6 +45,7 @@ function reduceTree(root) {
 
       // otherwise recursively reduce children
       } else {
+        if (node.children.length > 5) node.collapsed = true;
         for (let child of node.children) {
           reduce(child, sfunc);
         }
