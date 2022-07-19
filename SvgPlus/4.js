@@ -855,9 +855,9 @@ class LinkItem{
   }
 
   update(){
-    if (this.parent != null){
-      this.parent.update();
-    }
+    // if (this.parent != null){
+    //   this.parent.update();
+    // }
   }
 
   set next(next){

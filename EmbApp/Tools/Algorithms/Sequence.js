@@ -162,7 +162,7 @@ function run(params) {
 
 	let leafs = group.getSPaths();
 
-	const time = 50;
+	const time = 5;
 	const n = leafs.length;
   return {
     *[Symbol.iterator]() {

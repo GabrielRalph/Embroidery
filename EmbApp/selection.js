@@ -21,7 +21,6 @@ class ElementSelection {
         }
 
         if (value == null) return;
-        console.log(value);
         try {
           if (!Array.isArray(value)) value = [value];
           else [...value]

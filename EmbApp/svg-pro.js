@@ -286,7 +286,9 @@ class SvgPro extends SvgPlus {
 
     window.addEventListener("wheel", (e) => {
       let sp = this.vb.screenToSVG(e);
-      this.vb.scaleAtPoint(e.deltaY, sp)
+      if (sp instanceof Vector) {
+        this.vb.scaleAtPoint(e.deltaY, sp)
+      }
     })
 
     let down = false;
