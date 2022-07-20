@@ -196,6 +196,7 @@ class EmbApp extends SvgPlus {
       this.svgSpace.appendChild(svg);
       console.log("parsing stree");
       this.stree = new STree(svg.original, this.visualTree, svg.foreground);
+
       console.log("parsed");
 
       this.toggleAttribute("stree", true);

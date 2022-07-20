@@ -1,6 +1,6 @@
 import {ElementSelection} from "../selection.js"
 import {SvgPlus, Vector} from "../../SvgPlus/4.js"
-import {getApplicableAlgorithms, runAlgorithm, parseProperties} from "./algorithms.js"
+import {getApplicableAlgorithms, runAlgorithm, parseProperties, getAlgorithm, isApplicable} from "./algorithms.js"
 
 const PLAY_ICON = '<path style = "fill: var(--sfunc)" d="M50,9.35C27.55,9.35,9.35,27.55,9.35,50s18.2,40.65,40.65,40.65,40.65-18.2,40.65-40.65S72.45,9.35,50,9.35Zm21.26,46.58l-26.76,15.45c-4.57,2.64-10.28-.66-10.28-5.93v-30.89c0-5.27,5.71-8.57,10.28-5.93l26.76,15.45c4.57,2.64,4.57,9.23,0,11.87Z"/>'
 const inputTypes = {
@@ -157,6 +157,15 @@ class NodeTools extends SvgPlus {
       this.hidden = false;
     }
     this.buildTools(null);
+  }
+
+  async runPrefills() {
+    for (let prefill of this.app.stree.prefills) {
+      let alg = getAlgorithm(prefile.name);
+      if (isApplicable(alg, prefill.node.pattern)) {
+        await this.run(prefill.node, prefill.props, alg);
+      }
+    }
   }
 
   async run(node, props, algorithm) {

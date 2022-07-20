@@ -127,7 +127,6 @@ function run(params) {
 				visit.add(minIndx[1]);
 			}
 
-			// console.log(links);
 			let p1 = output.makeSPath();
 			p1.dpath.push(links[0].p1.dpath)
 			for (let link of links) {

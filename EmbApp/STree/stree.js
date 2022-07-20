@@ -70,7 +70,8 @@ function constructNodes(root) {
       // get and remove text function instructions
       let prefill = getPrefill(node);
       if (prefill != null) {
-        prefills.push([node, prefill]);
+        prefill.node = node;
+        prefills.push(prefill);
       }
 
       // recurse on all children
