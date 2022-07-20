@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>
+    </title>
+  </head>
+  <body>
+    <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 715.17 831.11">
+      <defs>
+        <style>.cls-1{fill:#fff;stroke:#000;stroke-miterlimit:10;}</style>
+      </defs>
+      <path d = "M0,0L100,50,0,10"></path>
+      <path class="cls-1" d="M49.31,173.12L242.99,.57l198.79,66.72,185.18,62.63s-143.53,124.46-190.62,171.56c-151.14,151.14-344.49,84.42-344.49,84.42,0,0-173.28-82.05-42.54-212.78Z"/>
+      <path class="cls-2" d="M150,150L150,250L250,250L250,150Z"></path>
+      <path class="cls-1" d="M273.92,544.5c-63.29-51.37-228.31,40.14-221.89,85.09,7.15,50.11,225.49,29.03,236.91,90.09,9.66,51.67-136.88,119.18-143.48,110.11-7.25-9.96,161.89-102,155.16-221.89-.51-9.08-2.46-43.72-26.69-63.4Z"/>
+      <path class="cls-1" d="M631.51,389.2c-147,18.62-176.88,41.56-178.37,58.55-2.97,33.85,105.97,53.26,108.93,106.21,3,53.64-105.34,96.48-100.76,106.21,2.97,6.31,50.85-6.94,200.16-66.72l25.8-64.16,27.31-67.92-83.06-72.16Z"/>
+    </svg>
+  </body>
+
+  <style>
+    path {
+      stroke: black;
+      fill: none;
+    }
+  </style>
+
+  <script type="module">
+    import {SvgPath, SvgPlus, Vector} from "./4.js";
+    let svg = new SvgPlus("Layer_1")
+    let paths = document.querySelectorAll("path");
+
+    function addPoint(p, color = "red", obj, size = 3, stroke = ""){
+      svg.createChild("circle", {
+        r: size,
+        fill: color,
+        stroke: stroke,
+        cx: p.x,
+        cy: p.y,
+      }).onclick = () => {
+        console.log(obj);
+      }
+    }
+
+    function addLine(p1, p2, color = "red") {
+      let pafter = svg.createChild(SvgPath).M(p1).L(p2);
+      pafter.stroke = color;
+    }
+
+    let color =0;
+    for (let path of [...paths]) {
+      let a = new SvgPath(path);
+      path.makeAbsolute();
+      addPoint(path.d.start.p, "red")
+      for (let cpoint of path.d) {
+        try {
+          let cubic = cpoint.cubic;
+          let next = cpoint.next.cubic;
+
+          if (cubic.points[0].sub(cubic.points[3]).norm() < 0.1) throw 'single point'
+          if (next.points[0].sub(next.points[3]).norm() < 0.1) throw 'single point'
+
+          let d = 0.01;
+          let p1 = cubic.getPoint(1-d);
+          let g1 = cubic.getGradient(1-d).mul(-1);
+          let t1 = p1.add( g1.dir().mul(50) );
+          let p2 = next.getPoint(d);
+          let g2 = next.getGradient(d)
+          let t2 = p2.add( g2.dir().mul(50) );
+
+          let angle = g1.angleBetween(g2) * 180 / Math.PI;
+          let isCorner = Math.abs(angle - 180) > 20;
+          console.log(Math.abs(angle - 180));
+          if (isCorner) {
+            addPoint(p1, "#ff000080");
+            addPoint(p2, "#0000ff80");
+            addPoint(cpoint.p, "#ff00ff80");
+
+            addLine(t1, p1, "red");
+            addLine(t2, p2, "blue");
+          }
+
+          // for (let i = 1; i < 10; i++) {
+          //   let point = cubic.getPoint(i/10);
+          //   let tpoint = point.add(cubic.getGradient(i/10).div(3))
+          //   addLine(point, tpoint, "black")
+          // }
+          // color += 10;
+          // let cafter = cpoint.next.cubic;
+          // // console.log(cpoint);
+          // // console.log(cbefore);
+          // let d = 0.1;
+          //
+          // let p2 = cafter.getPoint(d);
+          // let tafter = p2.add(cafter.getGradient(d).div(3))
+          //
+          //
+        } catch (e) {}
+      }
+    }
+  </script>
+</html>

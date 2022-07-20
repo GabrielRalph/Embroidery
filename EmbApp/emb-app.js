@@ -170,7 +170,8 @@ class EmbApp extends SvgPlus {
     if (this.svg) {
       this.svg.frame(node);
     }
-    this.nodeSelection.value = node;
+    let vnode = node ? node.vnode : null;
+    this.nodeSelection.value = vnode;
     this.nodeProperties.selectedNode = node;
     this.nodeTools.selectedNode = node;
   }

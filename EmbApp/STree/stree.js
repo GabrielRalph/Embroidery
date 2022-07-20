@@ -27,8 +27,13 @@ const PATTERN_IDS = {
 
 function reduceTree(root) {
   debug("update", "\treducing stree");
-  let reduce = (node, sfunc = null) => {
+  let reduce = (node) => {
     if (isGroup(node)) {
+      let children = [...node.children];
+      for (let child of children) {
+        reduce(child);
+      }
+
       // remove groups with no children, sfunction to parent
       if (node.children.length == 0) {
         node.remove();
@@ -40,15 +45,13 @@ function reduceTree(root) {
         if (node == root) {
           root = child;
         }
-        // reduce the child
-        reduce(child, sfunc);
-
       // otherwise recursively reduce children
-      } else {
-        if (node.children.length > 5) node.collapsed = true;
-        for (let child of node.children) {
-          reduce(child, sfunc);
-        }
+      } else if (node.children.length > 5) {
+        node.collapsed = true;
+      }
+    } else if (node.stype == "geo") {
+      if (node.normalised.d.length < 2) {
+        node.remove();
       }
     }
   }

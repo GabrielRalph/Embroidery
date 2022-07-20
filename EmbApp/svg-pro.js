@@ -156,6 +156,18 @@ class VectorSelector extends SvgPlus {
   onconnect(){
     let svg = this.svg;
     let cursor = svg.makeCursor(this.value);
+    let node = this;
+    let check = () => {
+      setTimeout(() => {
+        console.log(node.parentNode.isConnected);
+        if (document.body.contains(node)) {
+          check();
+        } else {
+          cursor.remove();
+        }
+      }, 200)
+    }
+    check();
     this.cursor = cursor;
     cursor.class = "vector-selector-cursor"
 
@@ -191,10 +203,6 @@ class VectorSelector extends SvgPlus {
     } catch (e) {
       this._lastValue = v;
     }
-  }
-
-  ondisconnect(){
-    this.cursor.remove();
   }
 }
 
@@ -248,11 +256,15 @@ class Cursor extends SvgPlus {
     let [v, name] = this.findClosestAnchor(value);
     this._value = v;
     this.name = name;
+    this.pos = v;
+    const event = new Event("input");
+    this.dispatchEvent(event);
+  }
+
+  set pos(v){
     if (v != null) {
       this.props = {transform: `translate(${v})`}
     }
-    const event = new Event("input");
-    this.dispatchEvent(event);
   }
 
   get value(){
@@ -432,4 +444,4 @@ class SvgPro extends SvgPlus {
 
 SvgPlus.defineHTMLElement(VectorSelector);
 
-export {SvgPro}
+export {SvgPro, Cursor}

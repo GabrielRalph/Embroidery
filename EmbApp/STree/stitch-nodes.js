@@ -1,4 +1,5 @@
 import {SvgPlus, Vector, DPath, SvgPath, CPoint} from "../../SvgPlus/4.js"
+import {Cursor} from "../svg-pro.js"
 let node_size = 7.5;
 let r45 = (node_size/2) / Math.sqrt(2);
 function getColor(node) {
@@ -27,100 +28,8 @@ function pointToVector(p) {
 let lastSelected = [];
 const LOOP_THRESHOLD = 1;
 
-function normaliseGeometry(el) {
-  let path = new SvgPath("path");
 
-  let get = (key) => el.getAttribute(key);
 
-  let ellipse = (c, r) => {
-    path.M(c.addV(-r.y))
-    .A(r, 1, 0, 1, c.addH(r.x))
-    .A(r, 1, 0, 1, c.addV(r.y))
-    .A(r, 1, 0, 1, c.addH(-r.x))
-    .A(r, 1, 0, 1, c.addV(-r.y))
-  }
-
-  let pointsToPath = () => {
-    let ps = get("points").split(" ");
-    let m = "M";
-    for (let p of ps) {
-      let v = pointToVector(p);
-      if (v != null) {
-        path[m](v);
-        m = "L";
-      }
-    }
-  }
-
-  switch (el.tagName) {
-    case "path":
-      path.d_string = get("d");
-      path.d.makeAbsolute();
-    break;
-
-    case "circle":
-      let cc = new Vector(get("cx"), get("cy"));
-      let rc = new Vector(get("r"), get("r"));
-      ellipse(cc, rc);
-    break;
-
-    case "ellipse":
-      let ce = new Vector(get("cx"), get("cy"));
-      let re = new Vector(get("rx"), get("ry"));
-      ellipse(ce, re);
-    break;
-
-    case "rect":
-      let c1 = new Vector(get('x'), get('y'));
-      let size = new Vector(get('width'), get('height'));
-
-      let rx = parseFloat(get('rx'));
-      let ry = parseFloat(get('ry'));
-
-      if (!ry) ry = rx;
-      if (!rx) rx = ry;
-      let c2 = c1.addH(size.x);
-      let c3 = c1.add(size);
-      let c4 = c1.addV(size.y);
-
-      let radius = rx > 0.1 && ry > 0.1;
-      if (radius) {
-        let r = new Vector(rx, ry);
-        path.M(c1.addH(rx))
-        .L(c2.addH(-rx))
-        .A(r, 1, 0, 1, c2.addV(ry))
-        .L(c3.addV(-ry))
-        .A(r, 1, 0, 1, c3.addH(-rx))
-        .L(c4.addH(rx))
-        .A(r, 1, 0, 1, c4.addV(-ry))
-        .L(c1.addV(ry))
-        .A(r, 1, 0, 1, c1.addH(rx));
-      } else {
-        path.M(c1).L(c2).L(c3).L(c4).Z()
-      }
-    break;
-
-    case "line":
-      path.M(new Vector(get("x1"), get("y1"))).
-      L(new Vector(get("x2"), get("y2")));
-    break;
-
-    case "polyline":
-      pointsToPath();
-    break;
-
-    case "polygon":
-      pointsToPath();
-      path.Z();
-    break;
-  }
-
-  path.update(3);
-
-  return path;
-}
-
-let points = new SvgPlus("svg");
 
 class SNode extends SvgPlus {
   constructor(el) {
@@ -173,7 +82,7 @@ class SNode extends SvgPlus {
 
     Object.defineProperty(node, "selected", {
       set: (v) => {
-        this.selected = v
+        this.toggleAttribute("selected", v)
       }
     })
 
@@ -244,8 +153,6 @@ class Geometry extends SNode {
     super(el);
     this.stype = "geo";
 
-    this.normalised = normaliseGeometry(this);
-
     let styles = window.getComputedStyle(this);
     let stroke = styles.stroke;
     let fill = styles.fill;
@@ -258,17 +165,11 @@ class Geometry extends SNode {
     }
   }
 
-  getVectorAtLength(l) {
-    return new Vector(this.getPointAtLength(l));
-  }
-  isVectorInFill(v) {
-    return this.isPointInFill(this.makeSVGPoint(v));
-  }
-  isVectorInStroke(v) {
-    return this.isPointInStroke(this.makeSVGPoint(v));
-  }
-  makeSVGPoint(v) {
-    return points.createSVGPoint(v.x, v.y);
+  get normalised() {
+    if (!this._normalised) {
+      this._normalised = SvgPath.normalise(this);
+    }
+    return this._normalised;
   }
 
   static is(el) {return SvgPlus.is(el, Geometry);}
@@ -293,6 +194,10 @@ class Group extends SNode {
     }
     recurse(this);
     return paths;
+  }
+
+  makeStitchVisualiser(){
+    return this.createChild(StitchVisualiser);
   }
 
   makeSPath() {
@@ -347,14 +252,36 @@ class SPath extends SNode {
     if (dpath.length == 0) {
       cmd = 'M';
     }
-    dpath[cmd](v);
+    let cp = new CPoint(cmd + v);
+    dpath.push(cp);
     if (update) this.updateDPath();
+    return cp;
   }
 
-  insertAfter(cpoint, v) {
-    let newc = new CPoint("L" + v);
-    this.dpath.insertAfter(cpoint, newc)
-    return newc
+  insertAfter(cpoint, path) {
+    if (SPath.is(path)) {
+      path = path.dpath;
+    }
+
+    let oldStart = null;
+    if (path instanceof DPath) {
+      oldStart = path.start;
+    }
+    this.dpath.insertAfter(cpoint, path);
+    if (oldStart) oldStart.cmd_type = "L";
+  }
+
+  rotateTo(cpoint) {
+    let [cp, i] = this.dpath.find(cpoint);
+    if (cp != null && cp != this.dpath.start && cp != this.dpath.end) {
+      this.dpath.pop();
+      console.log('t1');
+      this.dpath.start.cmd_type = "L";
+      this.dpath.rotateTo(cp);
+      console.log('t2');
+      this.dpath.L(cp.p)
+      cp.cmd_type = "M";
+    }
   }
 
   updateDPath(){
@@ -462,6 +389,48 @@ class SPath extends SNode {
   static is(el) {return SvgPlus.is(el, SPath);}
 }
 
+
+class StitchVisualiser extends Group {
+  constructor(el = "g"){
+    super(el);
+  	this.moves = this.makeGroup();
+  	this.stitches = this.makeGroup();
+    this.stitches.class = "stitches"
+  	this.moves.class = "moves"
+    this.needle = this.createChild("g", {class: "needle"});
+    this.needle.createChild("circle", {
+      r: "35",
+    })
+    this.needle.createChild("circle", {
+      r: "3",
+    })
+  }
+
+  set needlePos(v){
+    if (v != null) {
+      this.needle.props = {transform: `translate(${v})`}
+    }
+  }
+
+  addMove(p1, p2) {
+		this.moves.createChild("path", {
+			d: `M${p1}L${p2}`,
+		})
+  }
+
+  addStitch(p1, p2, color) {
+    this.needlePos = p2;
+    this.stitches.createChild("path", {
+      d: `M${p1}L${p2}`,
+      stroke: color,
+      class: "stitch"
+    });
+    this.stitches.createChild("path", {
+      d: `M${p1}L${p1}`,
+      class: "dot",
+    });
+  }
+}
 
 
 export {Geometry, Group, SPath}

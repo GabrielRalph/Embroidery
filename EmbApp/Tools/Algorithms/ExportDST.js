@@ -11,7 +11,6 @@ function distance([x1, y1], [x2, y2] = [0, 0]) {
 	return sqrt( sqr(x2 - x1) + sqr(y2 - y1) )
 }
 
-const COLOR = "#506bffb5"
 
 const MAD = 118;
 class DSTBuffer{
@@ -545,55 +544,50 @@ function parseProperties(props, parser) {
 
 function run(params) {
   let geo = params.input;
-  let output = params.guides;
+  let output = params.guides.makeStitchVisualiser();
   let props = params.props;
 
-	let reflect = new output.Vector(1, -1);
+	let bsl = props.back_stitch_length;
+	let bsr = props.back_stitch_repeats;
+	let origin = props.origin.round();
 
 	let dst = new DSTBuffer();
-	let origin = props.origin.round();
-	let og = origin;
-	dst.setOrigin([og.x, og.y*-1]);
+	dst.setOrigin([origin.x, origin.y*-1]);
+
+
+
 
 	let lastPoint = origin;
-	let g1 = output.makeGroup();
-	let g2 = output.makeGroup();
-	let addStitch = (p, color = null) => {
-		if (color != null) {
-			let o = g1.makeSPath();
-			o.setAttribute("d", `M${lastPoint}L${p}`);
-			o.color = color;
-			o = g2.makeSPath();
-			o.setAttribute("d", `M${p}L${p}`);
-			o.color = "#99999999"
-		}
-
+	function addStitch(p, color = null){
+		output.addStitch(lastPoint, p, color);
 		lastPoint = p;
 		dst.addStitchPoint([p.x, p.y*-1]);
 	}
 
-	let jumpTo = (p, stitch = true) => {
-		let o = g1.makeSPath();
-		o.setAttribute("d", `M${lastPoint}L${p}`);
-		o.color = COLOR;
+	function jumpTo(p, stitch = true) {
+		output.addMove(lastPoint, p);
 		lastPoint = p;
 		dst.jumpTo([p.x, p.y*-1], stitch);
 	}
 
-	const bstitches = 2;
-	const rbs = 1;
-	let backstich = (cpoint, dir = true) => {
-		for (let i = 0; i < rbs; i++) {
-			let cur = cpoint;
-			for (let j = 0; j < bstitches; j++) {
-				cur = cur[dir ? "next" : "last"];
-				if (!cur) break;
-				addStitch(cur.p);
-			}
 
-			while (cur != cpoint) {
+	let bsn = bsl*bsr
+	function backstich(cpoint, dir = true){
+		let cur = cpoint;
+		let i = 0;
+		let rps = 0;
+
+		for (let r = 0; r < bsr; r++) {
+			let i = 0;
+			while (i < bsl && cur[dir ? "next" : "last"] != null) {
+				cur = cur[dir ? "next" : "last"];
+				addStitch(cur.p, "#3335");
+				i++;
+			}
+			while (i > 0) {
 				cur = cur[dir ? "last" : "next"];
-				addStitch(cur.p);
+				addStitch(cur.p, "#3335")
+				i--;
 			}
 		}
 	}
@@ -632,6 +626,8 @@ function run(params) {
 				backstich(cur, false);
 				yield 0;
 			}
+
+			for (let i = 0; i < 100; i++) yield 0;
 
 			for (let path of paths) path.working = false;
 			dst.download();

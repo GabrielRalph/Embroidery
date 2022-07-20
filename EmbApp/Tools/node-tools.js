@@ -57,7 +57,6 @@ class PropsForm extends SvgPlus {
   }
 
   set algorithm(algorithm) {
-    this.innerHTML = "";
     this.buildProps(algorithm);
   }
   buildProps(algorithm){
@@ -107,6 +106,12 @@ class PropsForm extends SvgPlus {
   set hidden(v) {
     this.toggleAttribute("hidden", v);
   }
+
+  clear(){
+    this.innerHTML = "";
+    this.inputs = {};
+    this.runButton = null;
+  }
 }
 
 class AlgorithmIcon extends SvgPlus {
@@ -130,6 +135,7 @@ class NodeTools extends SvgPlus {
     this.app = emb;
     this.innerHTML = "";
     let props = new PropsForm();
+    this.propsForm = props;
     this.appendChild(props);
 
     let toolsList = this.createChild("div", {class: "selection-list tool-box line-gap"});
@@ -173,6 +179,8 @@ class NodeTools extends SvgPlus {
       }
       res = null;
     }
+
+    this.propsForm.clear();
 
     app.selected  = res;
     app.locked = false;

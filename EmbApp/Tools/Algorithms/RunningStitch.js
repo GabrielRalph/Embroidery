@@ -1,31 +1,5 @@
 const name = "Running Stitch";
 
-function isCorner(cp1) {
-  let last = cp1.last;
-  let next = cp1.next;
-  if (last && next && cp1.cmd_type == "L") {
-
-    let tvlast = last.p.sub(cp1.p);
-    let tvnext = next.p.sub(cp1.p);
-    let a = 180 * tvlast.angleBetween(tvnext) / Math.PI;
-    return Math.abs(a - 180) > 20;
-  }
-  return false;
-}
-
-
-function splitSegment(start){
-  let cpoint = start.next;
-  while (cpoint) {
-    if (isCorner(cpoint)) {
-      return cpoint;
-    }
-    cpoint = cpoint.next;
-  }
-
-  return null;
-}
-
 const properties = {
   max_stitch_length: {
     type: "string",
@@ -52,6 +26,20 @@ const icon = `
 `
 
 const pattern = "g"
+
+function splitAtNextCorner(path, start){
+  let corner = null;
+  let cur = start.next;
+  while (cur) {
+    if (cur.isCorner) {
+      corner = cur;
+      break;
+    }
+    cur = cur.next;
+  }
+
+  return path.splitAt(corner);
+}
 
 function nextStitch(l, s, path, end, dmin, dmax){
   // Get a stitch point, s, with a distance of max_length away from the last
@@ -91,6 +79,7 @@ function nextStitch(l, s, path, end, dmin, dmax){
 function run(params) {
   let geo = params.input;
   let output = params.output;
+  let visual = params.guides.makeStitchVisualiser();
   let props = params.props;
   let dmax = props.max_stitch_length;
   let dmin = props.min_stitch_length;
@@ -98,7 +87,8 @@ function run(params) {
   geo.working = true;
 
   let spath = output.makeSPath();
-  spath.color = geo.color;
+  let color = geo.color;
+  spath.color = color;
 
   let path = geo.normalised;
 
@@ -111,33 +101,35 @@ function run(params) {
     *[Symbol.iterator]() {
 
       let dpath = path.d;
-      let start = path.d.start;
-      let pathend = path.d.end;
+      let start = dpath.start;
+      // let pathend = dpath.end;
 
-      let split = start;
-      let splitNext = null;
-
-      let done = false;
-      while (!done) {
-        if (splitNext && split) split.next = splitNext;
-        split = splitSegment(split);
-        if (split == null) {
-          split = pathend;
-          done = true;
+      let splitLast = null;
+      do {
+        // put split section back and set next corner start
+        if (splitLast != null) {
+          start = splitLast.start;
+          path.push(splitLast);
+          path.update();
         }
-        splitNext = split.next;
 
-        split.next = null;
-        dpath.end = split;
-        dpath.update();
+        // split path at next corner
+        splitLast = splitAtNextCorner(path, start);
+        path.update();
 
+        // compute running stitch to end of split
         let end = path.getTotalLength();
+        // console.log(end);
         while (l < end) {
+          let lasts = s;
           [l, s] = nextStitch(l, s, path, end, dmin, dmax)
           spath.addPoint(s);
+          visual.addStitch(lasts, s)
           yield l/total;
         }
-      }
+
+
+      } while (splitLast != null)
     }
   }
 }

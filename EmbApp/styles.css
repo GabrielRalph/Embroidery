@@ -236,7 +236,17 @@ emb-app[locked] node-tools {
   cursor: pointer;
 }
 
-.i-stitch, .i-guide, .i-point, .i-stitch-d{
+.stitches {
+  stroke-width: 4;
+}
+.moves {
+  stroke: #506bffb5;
+  stroke-width: 2;
+}
+.dot {
+  stroke: #ffffff80;
+}
+.i-stitch, .i-guide, .i-point, .i-stitch-d, .stitches{
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -280,6 +290,15 @@ emb-app[locked] node-tools {
   justify-content: flex-end;
 }
 
+.needle circle{
+  stroke: grey;
+  fill: grey;
+}
+.needle circle:first-of-type {
+  fill: none;
+  stroke-width: 17.5;
+  opacity: 0.6;
+}
 
 .vector-selector-cursor {
   fill: var(--c-origin);
@@ -312,6 +331,7 @@ vector-selector {
 #svg-space svg[panning] {
   cursor: grabbing;
 }
+
 
 emb-app:not([locked]) .nodes > g, emb-app:not([locked]) node-tools, emb-app:not([locked]) node-properties {
   pointer-events: all;
