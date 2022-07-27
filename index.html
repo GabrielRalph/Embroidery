@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+    <!-- <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" /> -->
     <title>EMB</title>
     <link rel = "stylesheet" href = "./EmbApp/styles.css" />
     <script src = "./EmbApp/emb-app.js" type = "module"></script>
@@ -51,13 +51,27 @@
       let EMB = document.querySelector("emb-app");
       let tree = EMB.visualTree;
 
+      // const myWorker = new Worker('WebWork/worker.js', {type: "module"});
+      // myWorker.onmessage = (e) => {
+      //   console.log(e);
+      // }
+
       async function testTree(){
-        await EMB.load("./cc.svg");
+        await EMB.load("./TestData/test7.svg");
+        // await EMB.load("./TestData/Vines Rev2/Vines Back.svg");
         let g1 = document.querySelector("#Layer_1 > g:nth-child(2) > g:nth-child(1)");
         let g2 = document.querySelector("#Layer_1 > g:nth-child(2) > g:nth-child(2)");
         // console.log(g1, g2);
         // tree.replaceVNode(g1, g2);
         // g
+        // let data = {
+        //   node: EMB.stree.root.data,
+        //   algorithm: "running"
+        // }
+        // console.log(data.node);
+        // myWorker.postMessage(data);
+        // console.log("data posted");
+
       }
       testTree();
     }

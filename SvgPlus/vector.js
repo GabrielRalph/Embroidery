@@ -10,6 +10,7 @@ function abs(v){return Math.abs(v)}
 function sqrt(v){return Math.sqrt(v)}
 function sin(v){return Math.sin(v)}
 function cos(v){return Math.cos(v)}
+function ceil(v){return Math.ceil(v)}
 function floor(v){return Math.floor(v)}
 function isNaN(v){return Number.isNaN(v)}
 function isArray(v){return Array.isArray(v)}
@@ -209,6 +210,14 @@ class Vector {
     }
     return newVector;
   }
+
+  floor(){
+    return new Vector(floor(this._x), floor(this._y))
+  }
+  ceil(){
+    return new Vector(ceil(this._x), ceil(this._y))
+  }
+
   round(n){
     return new Vector(round(this._x, n), round(this._y, n))
   }
@@ -218,7 +227,11 @@ class Vector {
     return `${round(this._x, n)},${round(this._y, n)}`
   }
 
-  set x(v){ this._x = parseNumber(v); }
+  set x(v){
+    let n = parseNumber(v);
+    // console.log(n);
+    this._x = n;
+  }
   get x(){return this._x;}
   set y(v){ this._y = parseNumber(v); }
   get y(){return this._y;}

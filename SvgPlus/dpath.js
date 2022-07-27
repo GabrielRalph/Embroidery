@@ -478,13 +478,13 @@ class CPoint extends LinkItem{
       break;
 
       case "H":
-      this.x = params[0];
+      this.p = new Vector(params[0], 0);
       this.c1 = this.p
       this.c2 = this.p
       break;
 
       case "V":
-      this.y = params[0];
+      this.p = new Vector(0, params[0]);
       this.c1 = this.p
       this.c2 = this.p
       break;
@@ -624,7 +624,7 @@ class CPoint extends LinkItem{
   set x(val){
     val = parseFloat(val);
     if (Number.isNaN(val)) return;
-    this.p.x = val;
+    this._p.x = val;
   }
   get y(){
     return this.p.y;
@@ -632,7 +632,7 @@ class CPoint extends LinkItem{
   set y(val){
     val = parseFloat(val);
     if (Number.isNaN(val)) return;
-    this.p.y = val;
+    this._p.y = val;
   }
   dist(x, y){
     return this.p.dist(x, y);
@@ -784,18 +784,24 @@ class DPath extends LinkList{
     let start = this.start.p;
     let last = this.start.p;
     for (var point of this){
+
       if (point.cmd_type == "Z") {
         point.p = start;
       }else if (point.cmd_type == 'V'){
         point.x = last.x;
       } else if (point.cmd_type == 'H'){
+        console.log(point.p + " " + last.y);
         point.y = last.y;
-      } else if (point.isAbsolute){
-        last = point;
+        console.log(point.p + "");
+
+      }
+
+      if (point.isAbsolute){
+        last = point.p;
       }else{
         point.add(last);
         point.cmd_type = point.cmd_type.toUpperCase();
-        last = point
+        last = point.p
       }
 
     }

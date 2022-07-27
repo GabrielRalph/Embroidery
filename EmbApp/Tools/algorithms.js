@@ -52,9 +52,14 @@ function getApplicableNodes(algorithm, root) {
   if (isApplicable(algorithm, root.pattern)) {
     applicable.push(root);
   } else if (containsApplicable(algorithm, root.pattern)) {
-    for (let child of bfs(root)) {
-      if (isApplicable(algorithm, child.pattern)) {
-        applicable.push(child);
+    // console.log(root.chi);
+    if (root.children.length == 0) {
+      applicable.push(root);
+    } else {
+      for (let child of bfs(root)) {
+        if (isApplicable(algorithm, child.pattern)) {
+          applicable.push(child);
+        }
       }
     }
   }
@@ -77,7 +82,6 @@ function bfs(root) {
 
 function getApplicableAlgorithms(root) {
   let applicable = new Set();
-
   let patterns = new Set();
   if (root) {
     let pattern = root.pattern;
@@ -101,6 +105,8 @@ async function runAlgorithm(root, props, algorithm, stree){
   let select = root;
 
   let applicable = getApplicableNodes(algorithm, root);
+
+  console.log(applicable);
 
   let parallelTasks = [];
   let errors = []

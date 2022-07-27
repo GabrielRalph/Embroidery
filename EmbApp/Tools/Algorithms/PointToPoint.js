@@ -22,13 +22,18 @@ const icon = `
 function run(params){
   let geo = params.input;
   let output = params.output;
-
   let spath = output.makeSPath();
   spath.color = geo.color;
-  for (let cpoint of geo.normalised.d) {
-    spath.addPoint(cpoint.p);
+  let normal = geo.normalised;
+  normal.makeAbsolute();
+  return {
+    *[Symbol.iterator]() {
+      for (let cpoint of normal.d) {
+        spath.addPoint(cpoint.p);
+        yield 0;
+      }
+    }
   }
-  return null;
 }
 
 export {name, properties, run, pattern, icon}

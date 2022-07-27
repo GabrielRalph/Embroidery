@@ -395,22 +395,7 @@ class SvgPlus{
   }
 
   static make(name){
-    if (` animate animateMotion animateTransform circle clipPath
-      color-profile defs desc discard ellipse feBlend feColorMatrix
-      feComponentTransfer feComposite feConvolveMatrix feDiffuseLighting
-      feDisplacementMap feDistantLight feDropShadow feFlood feFuncA
-      feFuncB feFuncG feFuncR feGaussianBlur feImage feMerge feMergeNode
-      feMorphology feOffset fePointLight feSpecularLighting feSpotLight
-      feTile feTurbulence filter foreignObject g hatch hatchpath image
-      line linearGradient marker mask mesh meshgradient meshpatch meshrow
-      metadata mpath path pattern polygon polyline radialGradient rect
-      script set solidcolor stop style svg switch symbol text textPath
-      title tspan unknown use view `.indexOf(` ${name} `) != -1){
-      return document.createElementNS("http://www.w3.org/2000/svg", name);
-
-    }else{
-      return document.createElement(name);
-    }
+    return make(name);
   }
 
   static parseElement(elem = null) {
@@ -580,7 +565,10 @@ class SvgPlus{
     return this.isPointInStroke(this.makeSVGPoint(v));
   }
   makeSVGPoint(v) {
-    return points.createSVGPoint(v.x, v.y);
+    let p = points.createSVGPoint();
+    p.x = v.x;
+    p.y = v.y;
+    return p;
   }
 }
 

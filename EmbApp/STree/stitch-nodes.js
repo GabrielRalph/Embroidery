@@ -165,6 +165,16 @@ class Geometry extends SNode {
     }
   }
 
+  get data(){
+    return {
+      type: "geo",
+      data: this.normalised.d_string,
+      color: this.color,
+      getPoint: (v) => this.getVectorAtLength(v)
+      
+    }
+  }
+
   get normalised() {
     if (!this._normalised) {
       this._normalised = SvgPath.normalise(this);
@@ -208,8 +218,21 @@ class Group extends SNode {
     return this.createChild(Group);
   }
 
+  get data(){
+    let data = {
+      type: "group",
+      children: []
+    }
+    for (let node of this.children) {
+      data.children.push(node.data);
+    }
+    return data;
+  }
+
   static is(el) {return SvgPlus.is(el, Group);}
 }
+
+
 
 class SPath extends SNode {
   constructor(el = "path") {
@@ -386,6 +409,14 @@ class SPath extends SNode {
     this._repeats = num;
   }
 
+  get data(){
+    return {
+      type: "spath",
+      data: this.getAttribute("d"),
+      color: "color",
+    }
+  }
+
   static is(el) {return SvgPlus.is(el, SPath);}
 }
 
@@ -424,6 +455,12 @@ class StitchVisualiser extends Group {
       d: `M${p1}L${p2}`,
       stroke: color,
       class: "stitch"
+    });
+    this.stitches.createChild("path", {
+      d: `M${p1}L${p2}`,
+      stroke: "#fff",
+      opacity: "0.3",
+      "stroke-width": "1.5",
     });
     this.stitches.createChild("path", {
       d: `M${p1}L${p1}`,

@@ -592,7 +592,9 @@ function run(params) {
 		}
 	}
 
+
 	let paths = geo.querySelectorAll(".spath,.spath-loop");
+	if (geo.tagName == "path") paths = [geo];
   return {
     *[Symbol.iterator]() {
 			for (let path of paths) path.working = true;

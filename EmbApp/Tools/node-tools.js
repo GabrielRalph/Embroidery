@@ -171,7 +171,6 @@ class NodeTools extends SvgPlus {
   async run(node, props, algorithm) {
     let app = this.app;
     let stree = app.stree;
-
     app.locked = true;
     try {
       parseProperties(props, algorithm);
@@ -181,7 +180,9 @@ class NodeTools extends SvgPlus {
 
     let res = null;
     try {
+      console.log('here');
       res = await runAlgorithm(node, props, algorithm, stree);
+      console.log('done');
     } catch (es) {
       for (let e of es) {
         console.log(e.error);
