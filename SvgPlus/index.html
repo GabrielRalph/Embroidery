@@ -70,8 +70,8 @@
     }
 
     let vb = svg.getBBox();
-    let pos = new Vector(vb).floor();
-    let size = new Vector(vb.width, vb.height).ceil();
+    let pos = (new Vector(vb)).floor();
+    let size = (new Vector(vb.width, vb.height)).ceil();
     svg.createChild("rect", {
       x: pos.x,
       y: pos.y,
