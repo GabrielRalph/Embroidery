@@ -575,7 +575,6 @@ class CPoint extends LinkItem{
     }else{
       this._x_axis_rotation = 0;
     }
-    this.update();
   }
   get large_arc_flag(){
     return this._large_arc_flag;
